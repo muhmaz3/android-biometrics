@@ -1,0 +1,114 @@
+diff -ruN OpenCV-2.3.1/android.cmake OpenCV-2.3.1-android/android.cmake
+--- OpenCV-2.3.1/android.cmake	1970-01-01 09:00:00.000000000 +0900
++++ OpenCV-2.3.1-android/android.cmake	2011-08-20 15:32:34.053969859 +0900
+@@ -0,0 +1,28 @@
++# CMake toolchain to build OpenCV 2.3.1 for Android 2.2. Sample usage:
++#
++# ANDROID_BIN=`pwd`/../android-ndk-r5c/toolchains/arm-linux-androideabi-4.4.3/prebuilt/linux-x86/bin/ \
++# ANDROID_CPP=`pwd`/../android-ndk-r5c/sources/cxx-stl/gnu-libstdc++/ \
++# ANDROID_ROOT=`pwd`/../android-ndk-r5c/platforms/android-9/arch-arm/ \
++# cmake -DCMAKE_TOOLCHAIN_FILE=android.cmake -DCMAKE_INSTALL_PREFIX=.. \
++# -DOPENCV_BUILD_3RDPARTY_LIBS=TRUE -DWITH_FFMPEG=FALSE -DWITH_GTK=FALSE -DWITH_GSTREAMER=FALSE \
++# -DWITH_V4L=FALSE -DWITH_PVAPI=FALSE -DWITH_1394=FALSE -DBUILD_NEW_PYTHON_SUPPORT=FALSE -DBUILD_TESTS=FALSE
++#
++# If you really need to use OpenCV on a CPU with no FPU, replace "libs/armeabi-v7a" by "libs/armeabi" and
++# "-march=armv7-a -mfloat-abi=softfp -mfpu=vfp" with "-march=armv5te -mtune=xscale -msoft-float"
++
++set(CMAKE_SYSTEM_NAME UnixPaths)
++set(CMAKE_SYSTEM_PROCESSOR arm)
++set(ANDROID TRUE)
++
++set(CMAKE_C_COMPILER   "$ENV{ANDROID_BIN}/arm-linux-androideabi-gcc")
++set(CMAKE_CXX_COMPILER "$ENV{ANDROID_BIN}/arm-linux-androideabi-g++")
++
++set(CMAKE_C_LINK_EXECUTABLE    "<CMAKE_C_COMPILER>   <FLAGS> <CMAKE_C_LINK_FLAGS>   <LINK_FLAGS> <OBJECTS> -o <TARGET> -nostdlib <LINK_LIBRARIES> -L$ENV{ANDROID_ROOT}/usr/lib/ -lgcc -ldl -lz -lm -lc")
++set(CMAKE_CXX_LINK_EXECUTABLE  "<CMAKE_CXX_COMPILER> <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> -nostdlib <LINK_LIBRARIES> -L$ENV{ANDROID_CPP}/libs/armeabi-v7a/ -L$ENV{ANDROID_ROOT}/usr/lib/ -lstdc++ -lgcc -ldl -lz -lm -lc")
++
++set(CMAKE_C_CREATE_SHARED_LIBRARY    "<CMAKE_C_COMPILER> <CMAKE_SHARED_LIBRARY_C_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS> <CMAKE_SHARED_LIBRARY_SONAME_C_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> -nostdlib <LINK_LIBRARIES> -L$ENV{ANDROID_ROOT}/usr/lib/ -lgcc -ldl -lz -lm -lc")
++set(CMAKE_CXX_CREATE_SHARED_LIBRARY  "<CMAKE_CXX_COMPILER> <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <CMAKE_SHARED_LIBRARY_SONAME_CXX_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> -nostdlib <LINK_LIBRARIES> -L$ENV{ANDROID_CPP}/libs/armeabi-v7a/ -L$ENV{ANDROID_ROOT}/usr/lib/ -lstdc++ -lgcc -ldl -lz -lm -lc")
++
++add_definitions("-DANDROID -fPIC -ffunction-sections -funwind-tables -fstack-protector -march=armv7-a -mfloat-abi=softfp -mfpu=vfp -fomit-frame-pointer -fstrict-aliasing -funswitch-loops -finline-limit=300")
++
++include_directories("$ENV{ANDROID_CPP}/include/", "$ENV{ANDROID_CPP}/libs/armeabi-v7a/include/" "$ENV{ANDROID_ROOT}/usr/include/")
+diff -ruN OpenCV-2.3.1/modules/calib3d/CMakeLists.txt OpenCV-2.3.1-android/modules/calib3d/CMakeLists.txt
+--- OpenCV-2.3.1/modules/calib3d/CMakeLists.txt	2011-04-28 22:37:20.000000000 +0900
++++ OpenCV-2.3.1-android/modules/calib3d/CMakeLists.txt	2011-08-20 15:33:15.447363028 +0900
+@@ -1 +1 @@
+-define_opencv_module(calib3d opencv_core opencv_imgproc opencv_highgui opencv_features2d opencv_flann)
++define_opencv_module(calib3d opencv_core opencv_imgproc opencv_highgui opencv_flann)
+diff -ruN OpenCV-2.3.1/modules/calib3d/include/opencv2/calib3d/calib3d.hpp OpenCV-2.3.1-android/modules/calib3d/include/opencv2/calib3d/calib3d.hpp
+--- OpenCV-2.3.1/modules/calib3d/include/opencv2/calib3d/calib3d.hpp	2011-08-02 21:48:41.000000000 +0900
++++ OpenCV-2.3.1-android/modules/calib3d/include/opencv2/calib3d/calib3d.hpp	2011-08-20 15:33:15.448363013 +0900
+@@ -44,7 +44,10 @@
+ #define __OPENCV_CALIB3D_HPP__
+ 
+ #include "opencv2/core/core.hpp"
++#include "opencv2/flann/flann.hpp"
++#ifndef ANDROID // Android does not support circular dependencies...
+ #include "opencv2/features2d/features2d.hpp"
++#endif
+ 
+ #ifdef __cplusplus
+ extern "C" {
+@@ -531,6 +534,7 @@
+ enum { CALIB_CB_SYMMETRIC_GRID = 1, CALIB_CB_ASYMMETRIC_GRID = 2,
+        CALIB_CB_CLUSTERING = 4 };
+ 
++#ifndef ANDROID // Android does not support circular dependencies...
+ //! finds circles' grid pattern of the specified size in the image
+ CV_EXPORTS bool findCirclesGrid( InputArray image, Size patternSize,
+                                  OutputArray centers, int flags=CALIB_CB_SYMMETRIC_GRID,
+@@ -538,6 +542,7 @@
+ 
+ CV_EXPORTS_W bool findCirclesGridDefault( InputArray image, Size patternSize,
+                                           OutputArray centers, int flags=CALIB_CB_SYMMETRIC_GRID );
++#endif
+ 
+ enum
+ {
+diff -ruN OpenCV-2.3.1/modules/calib3d/src/calibinit.cpp OpenCV-2.3.1-android/modules/calib3d/src/calibinit.cpp
+--- OpenCV-2.3.1/modules/calib3d/src/calibinit.cpp	2011-08-02 21:48:41.000000000 +0900
++++ OpenCV-2.3.1-android/modules/calib3d/src/calibinit.cpp	2011-08-20 15:33:15.449362998 +0900
+@@ -1936,6 +1936,7 @@
+                              nelems, patternWasFound );
+ }
+ 
++#ifndef ANDROID // Android does not support circular dependencies...
+ bool cv::findCirclesGrid( InputArray _image, Size patternSize,
+                           OutputArray _centers, int flags, const Ptr<FeatureDetector> &blobDetector )
+ {
+@@ -2032,5 +2033,6 @@
+     Mat(centers).copyTo(_centers);
+     return false;
+ }
++#endif
+ 
+ /* End of file. */
+diff -ruN OpenCV-2.3.1/modules/calib3d/src/circlesgrid.cpp OpenCV-2.3.1-android/modules/calib3d/src/circlesgrid.cpp
+--- OpenCV-2.3.1/modules/calib3d/src/circlesgrid.cpp	2011-08-02 21:48:41.000000000 +0900
++++ OpenCV-2.3.1-android/modules/calib3d/src/circlesgrid.cpp	2011-08-20 15:33:15.449362998 +0900
+@@ -1527,9 +1527,11 @@
+   return cornerIdx;
+ }
+ 
++#ifndef ANDROID // Android does not support circular dependencies...
+ bool cv::findCirclesGridDefault( InputArray image, Size patternSize,
+                              OutputArray centers, int flags )
+ {
+     return findCirclesGrid(image, patternSize, centers, flags);
+ }
++#endif
+ 
+diff -ruN OpenCV-2.3.1/modules/calib3d/src/precomp.hpp OpenCV-2.3.1-android/modules/calib3d/src/precomp.hpp
+--- OpenCV-2.3.1/modules/calib3d/src/precomp.hpp	2011-06-14 19:37:18.000000000 +0900
++++ OpenCV-2.3.1-android/modules/calib3d/src/precomp.hpp	2011-08-20 15:33:15.450362983 +0900
+@@ -54,7 +54,9 @@
+ #include "opencv2/imgproc/imgproc.hpp"
+ #include "opencv2/imgproc/imgproc_c.h"
+ #include "opencv2/core/internal.hpp"
++#ifndef ANDROID // Android does not support circular dependencies...
+ #include "opencv2/features2d/features2d.hpp"
++#endif
+ #include <vector>
+ 
+ #endif
