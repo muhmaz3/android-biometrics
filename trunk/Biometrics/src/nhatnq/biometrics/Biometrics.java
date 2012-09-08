@@ -23,6 +23,7 @@ public class Biometrics extends Activity {
     
     protected void onResume() {
     	super.onResume();
+		// You can create an Application instance and put this into that
     	AppUtil.createAppDirectory();
     };
     
