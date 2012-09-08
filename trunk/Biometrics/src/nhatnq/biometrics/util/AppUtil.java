@@ -1,6 +1,7 @@
 package nhatnq.biometrics.util;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 
 import android.content.Context;
@@ -9,8 +10,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.widget.ImageView;
 
 public class AppUtil {
@@ -131,4 +132,27 @@ public class AppUtil {
 		}
 		return true;
 	}
+	
+	public static boolean createAppDirectory(){
+		File home = new File(Const.APP_FOLDER);
+		home.mkdir();
+		File f;
+		try{
+			f = new File(home, Const.FACE_DATA_FILE);
+			f.createNewFile();
+			f = new File(home, Const.VOICE_DATA_FILE);
+			f.createNewFile();
+		}catch(IOException e){
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+	
+	public static boolean isSDCardAvailable(){
+		String state = Environment.getExternalStorageState();
+		return state.equals(Environment.MEDIA_MOUNTED);
+	}
+	
+	
 }

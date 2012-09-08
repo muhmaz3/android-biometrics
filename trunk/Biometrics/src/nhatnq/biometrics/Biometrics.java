@@ -1,5 +1,6 @@
 package nhatnq.biometrics;
 
+import nhatnq.biometrics.util.AppUtil;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -19,6 +20,11 @@ public class Biometrics extends Activity {
         ImageView ivRecognizing = (ImageView) findViewById(R.id.imageRecognizing);
         ivRecognizing.setOnClickListener(ClickImageHandler);
     }
+    
+    protected void onResume() {
+    	super.onResume();
+    	AppUtil.createAppDirectory();
+    };
     
     View.OnClickListener ClickImageHandler = new View.OnClickListener() {
 		
