@@ -24,13 +24,13 @@
         </activity>
         
         <activity android:name=".ScreenTraining"
-            android:screenOrientation="portrait"
+            android:screenOrientation="landscape"
             android:label="Training"></activity>
         <activity android:name=".ScreenRecognizing"
-            android:screenOrientation="portrait"
-            android:label="Face Recognizing"></activity>
-        
-        <activity android:name=".ScreenFaceDetect"></activity>
+            android:screenOrientation="landscape"
+            android:label="Recognizing"></activity>
+        <activity android:name=".ScreenGrayscaleDisplay" ></activity>
+
     </application>
 
 </manifest>

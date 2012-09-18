@@ -1,47 +1,84 @@
 package nhatnq.biometrics;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.Calendar;
+import java.io.FilenameFilter;
+import java.util.ArrayList;
+import java.util.List;
 
-import nhatnq.biometrics.ui.FaceView;
+import nhatnq.biometrics.face.FaceTrainer;
+import nhatnq.biometrics.util.AppConst;
 import nhatnq.biometrics.util.AppUtil;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.text.format.DateFormat;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.Gallery;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class ScreenTraining extends Activity {
+	public static final int MIN_FACE_IMAGE_CAPTURED = 2; 
 	private static final String TAG = ScreenTraining.class.getCanonicalName();
 	private static final int REQ_CAMERA_CAPTURE = 7;
 	private ImageView mIvFace;
-    public static String mImagePath, extraImagePath;
+	private Gallery mGallery;
+	private GalleryApdapter mAdapter;
+	private List<String> mCapturedFaceImages;
+    public String extraImagePath;
+    public static String mImagePath;
     
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.screen_training);
 		
-		mIvFace = (ImageView) findViewById(R.id.image);
+		mIvFace = (ImageView) findViewById(R.id.ivFace);
+		mIvFace.setScaleType(ScaleType.FIT_CENTER);
+		
 		Button bt;
-		bt = (Button) findViewById(R.id.action_capture);
+		bt = (Button) findViewById(R.id.btnCapture);
 		bt.setOnClickListener(OnClickButtonHandler);
-		bt = (Button) findViewById(R.id.action_detect);
+		bt = (Button) findViewById(R.id.btnDetect);
 		bt.setOnClickListener(OnClickButtonHandler);
-		bt = (Button) findViewById(R.id.action_save);
+		bt = (Button) findViewById(R.id.btnSave);
 		bt.setOnClickListener(OnClickButtonHandler);
+		
+		mGallery = (Gallery) findViewById(R.id.gallery);
+		mGallery.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> adapter, View v, int pos,
+					long id) {
+				String src = (String)adapter.getItemAtPosition(pos);
+				Bitmap bm = BitmapFactory.decodeFile(src);
+	    		mIvFace.setImageBitmap(bm);
+	    		bm = null;
+			}
+			
+		});
+		
+		fetchLocalFaceImages();
+    	mAdapter = new GalleryApdapter(this);
+		mGallery.setAdapter(mAdapter);
 		
 		if(savedInstanceState != null){
         	extraImagePath = savedInstanceState.getString("extra_image_path");
@@ -66,15 +103,23 @@ public class ScreenTraining extends Activity {
 		}
 	}
     
-    protected void onStart() {
-    	super.onStart();Log.e(TAG, "onStart()");
-    	if(mImagePath != null){
-//    		AppUtil.loadBitmapFromPath(mImagePath, mIvFace, 320, 480);
-    		Bitmap bm = FaceView.rotateBitmap90(mImagePath);
-    		mIvFace.setImageBitmap(bm);
-    		mIvFace.setScaleType(ScaleType.FIT_XY);
-    		bm = null;
+    protected void onResume() {
+    	super.onResume();
+
+    	if(extraImagePath != null){
+    		AppUtil.loadBitmapFromPath(extraImagePath, mIvFace, 320, 240);
+    		
+    		mCapturedFaceImages.add(extraImagePath);
+    		mAdapter.notifyDataSetChanged();
     	}
+
+		TextView emptyView = new TextView(this);
+		emptyView.setText("No face(s) found");
+		emptyView.setLayoutParams(new LinearLayout.LayoutParams(
+				LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT));
+
+		((ViewGroup)(mGallery.getParent())).addView(emptyView);
+		mGallery.setEmptyView(emptyView);
     };
     
     View.OnClickListener OnClickButtonHandler = new View.OnClickListener() {
@@ -82,155 +127,122 @@ public class ScreenTraining extends Activity {
 		@Override
 		public void onClick(View v) {
 			switch (v.getId()) {
-			case R.id.action_capture:
+			case R.id.btnCapture:
 				callCameraImageCapturer();
 				break;
-			case R.id.action_detect:
-				detectFaceFromImage();
+			case R.id.btnDetect:
 				break;
-			case R.id.action_save:
-				
+			case R.id.btnSave:
+				saveFace();
 				break;
 			}
 		}
 	};
 	
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
-		
-		if(resultCode == RESULT_OK && requestCode == REQ_CAMERA_CAPTURE){
-//			System.gc();
-//			mImagePath = null;
-//			
-//			String menufacturerBrand = Build.BRAND.toLowerCase();
-//			if (Build.VERSION.SDK_INT == 8
-//					|| menufacturerBrand.contains("rockchip")
-//					|| menufacturerBrand.contains("lenovo")
-//					|| menufacturerBrand.contains("fih")
-//					|| menufacturerBrand.contains("viewsonic")
-//					|| (menufacturerBrand.contains("motorola") && Build.MODEL
-//							.toLowerCase().contains("xt882"))) {
-//				mImagePath = extraImagePath; 
-//			}else{
-//				if(data == null){
-//					Log.e(TAG, "REQ_CAMERA_IMAGE_CAPTURER:: return NULL intent");
-//					String[] projection = { 
-//							MediaStore.Images.ImageColumns._ID,
-//							MediaStore.Images.ImageColumns.DATA};
-//
-//					String sort = MediaStore.Images.ImageColumns._ID + " DESC";
-//					Cursor myCursor = getContentResolver().query(
-//							MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-//							projection, null, null, sort);
-//					long imageId = 0l;
-//					try {
-//						myCursor.moveToFirst();
-//						imageId = myCursor.getLong(myCursor.getColumnIndexOrThrow(
-//								MediaStore.Images.ImageColumns._ID));
-//					} finally {
-//						myCursor.close();
-//					}
-//					
-//					Uri uriLargeImage = Uri.withAppendedPath(
-//							MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-//							String.valueOf(imageId));
-//					if (uriLargeImage != null) {
-//						mImagePath = AppUtil.getFilePathFromUri(this, uriLargeImage);
-//					} else {
-//						Log.i(TAG, "REQ_CAMERA_IMAGE_CAPTURER:: retrieve new uri but still NULL");			
-//					}
-//				}else{ 
-//					if (data.getData() != null) {
-//						mImagePath = AppUtil.getFilePathFromUri(this, data.getData());
-//					} else {
-//						Log.i(TAG, "REQ_CAMERA_IMAGE_CAPTURER:: return NULL uri");
-//						String[] projection = { 
-//								MediaStore.Images.ImageColumns._ID,
-//								MediaStore.Images.ImageColumns.DATA};
-//
-//						String sort = MediaStore.Images.ImageColumns._ID + " DESC";
-//						Cursor myCursor = getContentResolver().query(
-//								MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-//								projection, null, null, sort);
-//						long imageId = 0l;
-//						try {
-//							myCursor.moveToFirst();
-//							imageId = myCursor.getLong(myCursor.getColumnIndexOrThrow(
-//									MediaStore.Images.ImageColumns._ID));
-//						} finally {							
-//							myCursor.close();
-//						}
-//						
-//						Uri uriLargeImage = Uri.withAppendedPath(
-//								MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-//								String.valueOf(imageId));
-//						if (uriLargeImage != null) {
-//							mImagePath = AppUtil.getFilePathFromUri(this, uriLargeImage);
-//						} else {
-//							Log.i(TAG, "REQ_CAMERA_IMAGE_CAPTURER:: retrieve new uri but still NULL");			
-//						}
-//					}
-//				}
-//			}
-		}
+	public boolean onCreateOptionsMenu(Menu menu) {
+		menu.add(Menu.CATEGORY_ALTERNATIVE, Menu.FIRST, Menu.NONE, "Clear training faces");
+		return true;
 	};
 	
-	protected void callCameraImageCapturer() {
-//		if(Environment.getExternalStorageState() == Environment.MEDIA_REMOVED){
-//			Toast.makeText(this, "Please insert SDCard into your phone", Toast.LENGTH_SHORT).show();
-//			return;
-//		}
-
-		String sFile = String.format("%s/%s/", Environment
-				.getExternalStorageDirectory().getAbsolutePath(), "biometrics");
-		File folder = new File(sFile);
-		if (!folder.exists())
-			folder.mkdir();
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case Menu.FIRST:
+			AppUtil.clearTrainingSampleFromSdcard(true);
+			break;
+		default:
+			break;
+		}
+		return true;
+	}
+	
+	private class GalleryApdapter extends BaseAdapter{
 		
-		File imageFile = new File(folder, getImageNameAtThisTime());
+		private LayoutInflater mInflater;
+		
+		public GalleryApdapter(Context context){
+			mInflater = LayoutInflater.from(context);
+		}
+		
+		@Override
+		public int getCount() {
+			return mCapturedFaceImages.size();
+		}
+
+		@Override
+		public String getItem(int arg0) {
+			return mCapturedFaceImages.get(arg0);
+		}
+
+		@Override
+		public long getItemId(int arg0) {
+			return arg0;
+		}
+
+		@Override
+		public View getView(int pos, View convertView, ViewGroup parent) {
+			if(convertView == null){
+				convertView = mInflater.inflate(R.layout.view_item_gallery, null);
+			}
+			
+			/**
+			 * Definitely the face image exists (load from local directory was okay)
+			 */
+			String src = getItem(pos);
+			Bitmap bm;
+			bm = AppUtil.decodeBitmapResized(src, 64, 48);
+			((ImageView)convertView.findViewById(R.id.imageview)).setImageBitmap(bm);
+			bm = null;
+			
+			return convertView;
+		}
+		
+	}
+	
+	private void fetchLocalFaceImages(){
+		File folder = new File(AppConst.APP_FOLDER);
+		if(!folder.exists()) AppUtil.createAppDirectory();
+		String[] faceImgs = folder.list(new FilenameFilter() {
+			
+			@Override
+			public boolean accept(File dir, String filename) {
+				if(filename.toLowerCase().endsWith(".jpg"))
+					return true;
+				return false;
+			}
+		});
+		mCapturedFaceImages = new ArrayList<String>();
+		
+		if(faceImgs == null) return;
+		
+		for(String s : faceImgs){
+			mCapturedFaceImages.add(AppConst.APP_FOLDER + "/"+s);
+			Log.i(TAG, ".Local face = " + s);
+		}
+	}
+	
+	private void callCameraImageCapturer() {
+		if(Environment.getExternalStorageState().equals(Environment.MEDIA_REMOVED)){
+			Toast.makeText(this, "Please insert SDCard into your phone", Toast.LENGTH_SHORT).show();
+			return;
+		}
+		
+		File imageFile = new File(AppConst.APP_FOLDER, AppUtil.generateFaceNameAtThisTime());
 
 		Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-		String menufacturerBrand = Build.BRAND.toLowerCase();
-		Log.e(TAG , "-callCameraImageCapturer-> "+menufacturerBrand
-				+", sdk level "+Build.VERSION.SDK_INT);
-//		if (Build.VERSION.SDK_INT == 8
-//				|| menufacturerBrand.contains("rockchip")
-//				|| menufacturerBrand.contains("lenovo")
-//				|| menufacturerBrand.contains("fih")
-//				|| menufacturerBrand.contains("viewsonic")
-//				|| (menufacturerBrand.contains("motorola") && Build.MODEL
-//						.toLowerCase().contains("xt882"))) {
-//			try {
-//				if (! imageFile.exists())
-//					imageFile.createNewFile();
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//			}
-//			intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(imageFile));
-//			extraImagePath = imageFile.getAbsolutePath();
-//			Log.i(TAG, "MediaStore.EXTRA_OUTPUT -> " + extraImagePath);
-//		}else{
-//			Log.i(TAG, "MediaStore.EXTRA_OUTPUT -> NONE!");
-//		}
-
 		intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(imageFile));
 		extraImagePath = imageFile.getAbsolutePath();
-		Log.e(TAG, "-MediaStore.EXTRA_OUTPUT -> " + extraImagePath);
 		
 		startActivityForResult(intent, REQ_CAMERA_CAPTURE);
 	}
 	
-	private void detectFaceFromImage(){
-		if(mImagePath != null) {
-			Intent intent = new Intent(ScreenTraining.this, ScreenFaceDetect.class);
-			startActivity(intent);
-		}else{
-			Toast.makeText(getBaseContext(), "Please capture an image...", Toast.LENGTH_SHORT).show();
+	private void saveFace(){
+		if(mCapturedFaceImages.size() < MIN_FACE_IMAGE_CAPTURED){
+			Toast.makeText(this, "Please capture 2 images at least!!!", Toast.LENGTH_LONG).show();
+			return;
 		}
+		FaceTrainer trainer = new FaceTrainer(ScreenTraining.this);
+		trainer.saveFaceData(mCapturedFaceImages);
 	}
 	
-	public static String getImageNameAtThisTime(){
-		Calendar cal = Calendar.getInstance();
-		return "Face_"+DateFormat.format("ddMMyyyy_hhmmss", cal).toString() +".jpg";
-	}
 }
