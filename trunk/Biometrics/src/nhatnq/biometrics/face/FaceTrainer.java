@@ -30,19 +30,16 @@ import static com.googlecode.javacv.cpp.opencv_legacy.CV_EIGOBJ_NO_CALLBACK;
 import static com.googlecode.javacv.cpp.opencv_legacy.cvCalcEigenObjects;
 import static com.googlecode.javacv.cpp.opencv_legacy.cvEigenDecomposite;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FilePermission;
 import java.util.ArrayList;
 import java.util.List;
 
-import nhatnq.biometrics.ScreenTraining;
+import nhatnq.biometrics.ScreenFaceTraining;
 import nhatnq.biometrics.util.AppConst;
-import nhatnq.biometrics.util.AppUtil;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.googlecode.javacpp.FloatPointer;
 import com.googlecode.javacpp.PointerPointer;
@@ -73,69 +70,39 @@ public class FaceTrainer {
 	CvMat projectedTrainFaceMat;
 	
 	private Context mBase;
+	
 	public FaceTrainer(Context context){
 		mBase = context;
 	}
 	
 	/**
-	 * Start training task
-	 * @param faceImages List of captured images
+	 * Main method for training from image files
+	 * @param faceImages List of image file paths in application folder
 	 */
-	public void saveFaceData(List<String> faceImages){
+	public void trainFaceData(List<String> faceImages){
 		new TrainingTask(faceImages).execute();
 	}
 	
-	private List<String> createGrayscaleImages(List<String> imgs){
-		List<String> list = new ArrayList<String>();
-		for(String imgPath : imgs){
-			String imgGrayscale = AppUtil.createGrayscaleImage(imgPath);
-			list.add(imgGrayscale);
+	/**
+	 * Image pre-processing for all images in folder
+	 * @param list List of image files
+	 * @return List of processed image files
+	 */
+	private static List<String> processOriginalImages(List<String> list){
+		if(list == null || list.size()==0) return null;
+		
+		printLog(".processOriginalImages with " + (list == null ? "null list" : list.size() +" images"));
+		String pgmPath;
+		List<String> finalPaths = new ArrayList<String>();
+		for(String singlePath : list){
+			pgmPath = FaceHelper.preProcessFaceImage(singlePath);
+			if(pgmPath != null) finalPaths.add(pgmPath);
+			else Log.e(TAG, "@ Error when processing face image at "+singlePath);
 		}
 		
-		// Delete all resized face images in ./face folder
-		File f;
-		for(String s : imgs){
-			f = new File(s);
-			f.delete(); 
-		}
-		return list;
+		return finalPaths;
 	}
-	
-	private List<String> createResizedImages(List<String> images){
-		if(images == null) return null;
 		
-		List<String> list = new ArrayList<String>(images.size());
-		for(String faceImgPath : images){
-			BioFaceObject[] objects = BioFaceDetector.detectFaceFromImage(faceImgPath);
-			if(objects == null || objects.length == 0) continue;
-			
-			String resizedFacePath = BioFaceDetector.createResizedFaceImageFromSource(
-					BioFaceDetector.getTargetFace(objects), 
-					faceImgPath);
-			list.add(resizedFacePath);
-		}
-		return list;
-	}
-	
-	private List<String> fetchPGM(){
-		File folder = new File(AppConst.FACE_FOLDER);
-		if(! folder.exists()) folder.mkdir();
-		
-		File[] files = folder.listFiles(new FileFilter() {
-			
-			@Override
-			public boolean accept(File pathname) {
-				return pathname.getAbsolutePath().toLowerCase().endsWith(".pgm");
-			}
-		});
-		
-		List<String> list = new ArrayList<String>(files.length);
-		for(File f : files){
-			list.add(f.getAbsolutePath());
-		}
-		return list;
-	}
-	
 	private class TrainingTask extends AsyncTask<String, Integer, Boolean>{
     	List<String> images;
 		private ProgressDialog dialog;
@@ -153,20 +120,12 @@ public class FaceTrainer {
 		}
 		
 		@Override
-		protected Boolean doInBackground(String... arg0) {
-			/**
-			 * (1) Detect face from image
-			 * (2) Create bitmap contains face
-			 * (3) Resize face bitmap and store on Sdcard */
-//			images = createResizedImages(images);
-			
-			/**
-			 * (1) Create gray-scale images from resized images
-			 * (2) Save face image data into facedata.xml file
-			 */
-//			images = createGrayscaleImages(images);
-			images = fetchPGM();
-			printList(images);
+		protected Boolean doInBackground(String... arg0) {			
+			images = processOriginalImages(images);
+			if(images == null || images.size() == 0){
+				printLog("Problem when extracting face from images.");
+				return false;
+			}
 			
 			return learn();
 		}
@@ -183,13 +142,17 @@ public class FaceTrainer {
 		protected void onPostExecute(Boolean result) {
 			super.onPostExecute(result);
 			dialog.dismiss();
+			if(result == false){
+				Toast.makeText(mBase, 
+						"Training has failed, train again !", Toast.LENGTH_LONG).show();
+			}
 		}
 
 	    public boolean learn() {
 			trainingFaceImgArr = loadFaceImgArray(images, true);
 			nTrainFaces = trainingFaceImgArr.length;
 
-			if (nTrainFaces < ScreenTraining.MIN_FACE_IMAGE_CAPTURED) {
+			if (nTrainFaces < ScreenFaceTraining.MIN_FACE_IMAGE_CAPTURED) {
 				return false;
 			}
 
@@ -213,15 +176,19 @@ public class FaceTrainer {
 				 * for the input object using the previously calculated eigen objects basis 
 				 * and the averaged object. Depending on ioFlags parameter it may be used either 
 				 * in direct access or callback mode.
+				 * 
+				 * + eigenVectArr: we got this in PCA
+				 * + pAvgTrainImg: we got this in PCA
+				 * + projectedTrainFaceMat: we will get its value after this method
 				 */
 				cvEigenDecomposite(trainingFaceImgArr[i],
 						nEigens,
 						new PointerPointer(eigenVectArr),
-						0, // ioFlags
-						null, // userData (Pointer)
+						0,
+						null,
 						pAvgTrainImg, 
-						floatPointer); // coeffs (FloatPointer)
-
+						floatPointer);
+			
 				for (int j1 = 0; j1 < nEigens; j1++) {
 					projectedTrainFaceMat.put(i, j1, floatPointer.get(j1));
 				}
@@ -238,7 +205,7 @@ public class FaceTrainer {
 	    
 	    /**
 		 * Does the Principal Component Analysis, finding the average image 
-		 * and the eigenfaces that represent any image in the given dataset.
+		 * and the eigen-faces that represent any image in the given dataset.
 		 */
 		private void doPCA() {
 			CvTermCriteria calcLimit;
@@ -249,73 +216,50 @@ public class FaceTrainer {
 			faceImgSize.width(trainingFaceImgArr[0].width());
 			faceImgSize.height(trainingFaceImgArr[0].height());
 			eigenVectArr = new IplImage[nEigens];
+			
 			for (int i = 0; i < nEigens; i++) {
-				eigenVectArr[i] = cvCreateImage(faceImgSize,
-						IPL_DEPTH_32F, // depth
-						1); // channels
+				eigenVectArr[i] = cvCreateImage(faceImgSize, IPL_DEPTH_32F, 1);
 			}
 
-			// 1 row, n columns
-			eigenValMat = cvCreateMat(1, nEigens, CV_32FC1); // 32-bit float, 1 channel
-
-			pAvgTrainImg = cvCreateImage(faceImgSize, 
-					IPL_DEPTH_32F, // depth
-					1); // channels
+			eigenValMat = cvCreateMat(1, nEigens, CV_32FC1);
+			pAvgTrainImg = cvCreateImage(faceImgSize, IPL_DEPTH_32F, 1);
 
 			/**
-			 * calcLimit
-						Criteria that determine when to stop calculation of eigen objects.
+			 * calcLimit Criteria that determine when to stop calculation of eigen objects.
 			 */
-			calcLimit = cvTermCriteria(CV_TERMCRIT_ITER, // type
-					nEigens, // max_iter
-					1); // epsilon
-
+			calcLimit = cvTermCriteria(CV_TERMCRIT_ITER, nEigens, 1);
+		
 			/**
-			 * The function cvCalcEigenObjects calculates orthor-normal eigen basis and 
-			 * the averaged object for a group of the input objects. Depending on ioFlags 
-			 * parameter it may be used either in direct access or callback mode. Depending 
-			 * on the parameter calcLimit, calculations are finished either after first 
-			 * calcLimit.max_iter dominating eigen objects are retrieved or if the ratio of the 
-			 * current eigenvalue to the largest eigenvalue comes down to calcLimit.epsilon threshold. 
-			 * The value calcLimit -> type must be CV_TERMCRIT_NUMB, CV_TERMCRIT_EPS, or CV_TERMCRIT_NUMB 
-			 * | CV_TERMCRIT_EPS . 
-			 * The function returns the real values calcLimit->max_iter and calcLimit->epsilon .
-			 * The function also calculates the averaged object, which must be created previously. Calculated 
-			 * eigen objects are arranged according to the corresponding eigenvalues in the descending order.
-			 * The parameter eigVals may be equal to NULL, if eigenvalues are not needed.
+			 * Read [3] for more details
+			 * After calling this, we receive:
+			 * + eigenVectArr: contains an array of floating-point image
+			 * + pAvgTrainImg: average image from training faces
+			 * + eigenValMat: matrix of eigen values
 			 */
-
 			cvCalcEigenObjects(nTrainFaces,
-					new PointerPointer(trainingFaceImgArr), // input
-					new PointerPointer(eigenVectArr), // output
-					CV_EIGOBJ_NO_CALLBACK, // ioFlags
-					0, // ioBufSize - unknown buffer size if 0
-					null, // userData
-					calcLimit, pAvgTrainImg,
+					trainingFaceImgArr,
+					eigenVectArr,
+					CV_EIGOBJ_NO_CALLBACK,
+					0,
+					null,
+					calcLimit, 
+					pAvgTrainImg,
 					eigenValMat.data_fl());
-
-			/**
-			 * CV_C - the C-norm (maximum of absolute values) of the array is normalized. 
-			 * CV_L1 - the L1-norm (sum of absolute values) of the array is normalized. 
-			 * CV_L2 - the (Euclidian) L2-norm of the array is normalized. 
-			 * CV_MINMAX - the array values are scaled and shifted to the specified range. 
-			 */
-			cvNormalize(eigenValMat,eigenValMat,1,0,
-					CV_L1, // norm_type
-					null); // mask
+			
+			// Normalize every row in matrix here
+			cvNormalize(eigenValMat, eigenValMat, 
+					128*Math.sqrt(nEigens+1), 
+					(-1)*128*Math.sqrt(nEigens+1), CV_L1, null);
 		}
 	    
 	    /** Stores the training data to the file 'data/facedata.xml'. */
 		private void storeTrainingData() {
-			printLog("storeTrainingData()");
-			
 			CvFileStorage fileStorage;
 			fileStorage = cvOpenFileStorage(AppConst.FACE_FOLDER + "/facedata.xml",
-					null, // memstorage
-					CV_STORAGE_WRITE, // flags
-					null); // encoding
+					null,
+					CV_STORAGE_WRITE,
+					null);
 			
-			// Number of persons
 //			cvWriteInt(fileStorage, "nPersons", nPersons); 
 //
 //			for (int i = 0; i < nPersons; i++) {
@@ -326,9 +270,7 @@ public class FaceTrainer {
 //						0); // quote
 //			}
 			
-			// Number of eigen vectors
 			cvWriteInt(fileStorage, "nEigens", nEigens); 
-			// Number of trained faces
 			cvWriteInt(fileStorage, "nTrainFaces", nTrainFaces); 
 			// Matrix [1, nTrainFaces]
 //			cvWrite(fileStorage, "trainPersonNumMat", personNumTruthMat, cvAttrList()); 
@@ -336,7 +278,7 @@ public class FaceTrainer {
 			cvWrite(fileStorage, "eigenValMat", eigenValMat, cvAttrList()); 
 			// Matrix [nTrainFaces, nEigens]
 			cvWrite(fileStorage, "projectedTrainFaceMat", projectedTrainFaceMat, cvAttrList()); 
-			// An average image
+
 			cvWrite(fileStorage, "avgTrainImg", pAvgTrainImg, cvAttrList());
 
 			for (int i = 0; i < nEigens; i++) {
@@ -345,15 +287,13 @@ public class FaceTrainer {
 			}
 
 			cvReleaseFileStorage(fileStorage);
+			
+			printLog("storeTrainingData(): DONE");
 		}
 		
 		/** 
-		 * Saves all the eigen-vectors as images, 
-		 * so that they can be checked. 
-		 */
+		 * Saves all the eigen-vectors as images, just for testing, preview algorithm */
 		private void storeEigenfaceImages() {
-			printLog("storeEigenfaceImages()");
-			
 			cvSaveImage(AppConst.FACE_FOLDER + "/out_averageImage.bmp", pAvgTrainImg);
 
 			// Create a large image made of many eigenface images.
@@ -376,23 +316,22 @@ public class FaceTrainer {
 					int y = h * (i / COLUMNS);
 					CvRect ROI = cvRect(x, y, w, h);
 					// Region of Interest (ROI)
-					cvSetImageROI(bigImg, ROI);// Put image into ROI-area
-					cvCopy(byteImg, // src
-							bigImg, // dst
-							null); // mask
+					cvSetImageROI(bigImg, ROI);
+					cvCopy(byteImg, bigImg, null);
 					cvResetImageROI(bigImg);
 					cvReleaseImage(byteImg);
 				}
 				cvSaveImage(AppConst.FACE_FOLDER + "/out_eigenfaces.bmp", bigImg);
 				cvReleaseImage(bigImg);
+				
+				printLog("storeEigenfaceImages(): DONE");
 			}
 		}
 		
 		/**
 		 * Converts the given float image to an unsigned character image.
 		 * 
-		 * @param srcImg
-		 *            the given float image
+		 * @param srcImg the given float image
 		 * @return the unsigned character image
 		 */
 		private IplImage convertFloatImageToUcharImage(IplImage srcImg) {
@@ -428,12 +367,7 @@ public class FaceTrainer {
 	    
 	}
 	
-	/**
-	 * Create array of IplImage from list of image paths
-	 * @param images
-	 * @param training boolean True if in training mode, false if recognizing mode
-	 * @return Array of gray-scale faces
-	 */
+
 	private IplImage[] loadFaceImgArray(List<String> images, boolean training) {
 		if(images == null || images.size() == 0) return null;
 		
@@ -448,13 +382,93 @@ public class FaceTrainer {
 		return faceImgArr;
 	}
 	
-	private void printLog(String log){
+	private static void printLog(String log){
 		Log.e(TAG, log);
 	}
 	
-	void printList(List<String> list){
+	static void printList(List<String> list){
 		for(String s : list){
 			printLog("List: "+s);
 		}
 	}
+
+	/***************************
+	 * OPENCV METHOD REFERENCE
+	 ***************************/
+	
+	/** [1]::cvCreateImage
+	 * 
+	   IplImage* cvCreateImage(CvSize size, int depth, int channels)
+			Creates an image header and allocates the image data.
+			Parameters:	
+				size – Image width and height
+				depth – Bit depth of image elements. See IplImage for valid depths.
+				channels – Number of channels per pixel. See IplImage for details. 
+					This function only creates images with interleaved channels.
+	 */
+	
+	/** [2]::cvNormalize
+	 * 
+	 cvNormalize(CvMat source, CvMat dest, 
+	 				double newMax, double newMin, int normType, CvArr mask)
+	 * Norm type
+	 * CV_C - the C-norm (maximum of absolute values) of the array is normalized. 
+	 * CV_L1 - the L1-norm (sum of absolute values) of the array is normalized. 
+	 * CV_L2 - the (Euclidian) L2-norm of the array is normalized. 
+	 * CV_MINMAX - the array values are scaled and shifted to the specified range. 
+	 */
+	
+	/** [3]::cvCalcEigenObjects
+	 * 
+	 * The function cvCalcEigenObjects calculates orthor-normal eigen basis and 
+	 * the averaged object for a group of the input objects. Depending on ioFlags 
+	 * parameter it may be used either in direct access or callback mode. Depending 
+	 * on the parameter calcLimit, calculations are finished either after first 
+	 * calcLimit.max_iter dominating eigen objects are retrieved or if the ratio of the 
+	 * current eigenvalue to the largest eigenvalue comes down to calcLimit.epsilon threshold. 
+	 * The value calcLimit -> type must be CV_TERMCRIT_NUMB, CV_TERMCRIT_EPS, or CV_TERMCRIT_NUMB 
+	 * | CV_TERMCRIT_EPS . 
+	 * The function returns the real values calcLimit->max_iter and calcLimit->epsilon .
+	 * The function also calculates the averaged object, which must be created previously. Calculated 
+	 * eigen objects are arranged according to the corresponding eigenvalues in the descending order.
+	 * The parameter eigVals may be equal to NULL, if eigenvalues are not needed.
+	 * 
+	Purpose: The function calculates an orthonormal eigen basis and a mean (averaged)
+			object for a group of input objects (images, vectors, etc.).
+	Context:
+	Parameters: nObjects  - number of source objects
+  		input     - pointer either to array of input objects
+  					or to read callback function (depending on ioFlags)
+		output    - pointer either to output eigen objects
+        or to write callback function (depending on ioFlags)
+			ioFlags   - input/output flags (see Notes)
+			ioBufSize - input/output buffer size
+			userData  - pointer to the structure which contains all necessary
+        			data for the callback functions
+			calcLimit - determines the calculation finish conditions
+			avg       - averaged object (has the same size as ROI)
+			eigVals   - pointer to corresponding eigen values (array of <nObjects>
+          			elements in descending order)
+	Notes: 1. input/output data (that is, input objects and eigen ones) may either
+		be allocated in the RAM or be read from/written to the HDD (or any
+		other device) by read/write callback functions. It depends on the
+		value of ioFlags paramater, which may be the following:
+		CV_EIGOBJ_NO_CALLBACK, or 0;
+		CV_EIGOBJ_INPUT_CALLBACK;
+		CV_EIGOBJ_OUTPUT_CALLBACK;
+		CV_EIGOBJ_BOTH_CALLBACK, or
+        CV_EIGOBJ_INPUT_CALLBACK | CV_EIGOBJ_OUTPUT_CALLBACK.
+		The callback functions as well as the user data structure must be
+		developed by the user.
+		2. If ioBufSize = 0, or it's too large, the function dermines buffer size itself.
+		3. Depending on calcLimit parameter, calculations are finished either if
+				eigenfaces number comes up to certain value or the relation of the
+			current eigenvalue and the largest one comes down to certain value
+			(or any of the above conditions takes place). The calcLimit->type value
+			must be CV_TERMCRIT_NUMB, CV_TERMCRIT_EPS or
+			CV_TERMCRIT_NUMB | CV_TERMCRIT_EPS. The function returns the real
+			values calcLimit->max_iter and calcLimit->epsilon.
+		4. eigVals may be equal to NULL (if you don't need eigen values in further).
+	 */
+
 }

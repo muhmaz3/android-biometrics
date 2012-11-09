@@ -26,14 +26,14 @@ import android.widget.Toast;
 
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
-public class ScreenGrayscaleDisplay extends Activity {
-	private static final String TAG = ScreenGrayscaleDisplay.class.getCanonicalName();
+public class ScreenFaceGrayscaleDisplay extends Activity {
+	private static final String TAG = ScreenFaceGrayscaleDisplay.class.getCanonicalName();
 	String[] images;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.screen_grayscale_display); 
+		setContentView(R.layout.screen_face_grayscale_display); 
 		
 		File[] files = getData();
 		images = convertGrayscale2RGB(files);
@@ -126,6 +126,8 @@ public class ScreenGrayscaleDisplay extends Activity {
 			iv.setImageBitmap(bm);
 			bm = null;
 			
+			Log.e(TAG, ".Position="+pos);
+			Log.e(TAG, ".Src="+src+", recognizing:"+FaceRecognizer.recognizingImagePath);
 			if(src.equals(FaceRecognizer.recognizingImagePath)){
 				Log.e(TAG, ".getView at "+pos+", highlight here...");
 				View v = convertView.findViewById(R.id.bright_view);

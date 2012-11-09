@@ -13,6 +13,11 @@ import android.media.FaceDetector;
 import android.util.Log;
 import android.view.View;
 
+/**
+ * @author Put by Nhat Nguyen
+ * Detect face and draw a border rectangle onto image 
+ */
+
 public class FaceView extends View {
 	private static final int NUM_FACES = 3; // max is 64
 

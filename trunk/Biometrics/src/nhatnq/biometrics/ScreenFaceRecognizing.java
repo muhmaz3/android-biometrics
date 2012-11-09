@@ -16,35 +16,34 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
-public class ScreenRecognizing extends Activity {
-	private static final String TAG = ScreenRecognizing.class.getCanonicalName();
+public class ScreenFaceRecognizing extends Activity {
+	private static final String TAG = ScreenFaceRecognizing.class.getCanonicalName();
 	private static final int REQ_CAMERA_CAPTURE = 7;
     private String extraImagePath;
 	private Spinner mThresholdSpn;
-	private TextView mTvStatus;
+//	private TextView mTvStatus;
 	private ImageView mIvFace;
-	public static float threshold;
+	public static float threshold;  
 	public static boolean result = false;
+	private static String lastDirectory = Environment.getExternalStorageDirectory().getAbsolutePath();
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.screen_recognizing);
+		setContentView(R.layout.screen_face_recognizing);
 		
 		mThresholdSpn = (Spinner) findViewById(R.id.spinner_threshold);
 		mIvFace = (ImageView) findViewById(R.id.ivFace);
-		mTvStatus = (TextView) findViewById(R.id.tvStatus);
+//		mTvStatus = (TextView) findViewById(R.id.tvStatus);
 		
-		Button bt;
-		bt = (Button) findViewById(R.id.btnCapture);
+		ImageView bt;
+		bt = (ImageView) findViewById(R.id.btnCapture);
 		bt.setOnClickListener(ClickButtonHandler);
-		bt = (Button) findViewById(R.id.btnRecognize);
+		bt = (ImageView) findViewById(R.id.btnRecognize);
 		bt.setOnClickListener(ClickButtonHandler);
 		
 		if(savedInstanceState != null){
@@ -57,7 +56,6 @@ public class ScreenRecognizing extends Activity {
 		
 		if(extraImagePath != null){
 			if(extraImagePath.endsWith(".pgm")) {
-				Toast.makeText(getApplicationContext(), "Pick .pgm image", Toast.LENGTH_LONG).show();
 				return;
 			}
     		AppUtil.loadBitmapFromPath(extraImagePath, mIvFace, 320, 240);
@@ -100,11 +98,11 @@ public class ScreenRecognizing extends Activity {
 		switch (item.getItemId()) {
 		case Menu.FIRST:
 			intent = new Intent(Intent.ACTION_GET_CONTENT);
-			intent.setType("image/*");
-			startActivityForResult(Intent.createChooser(intent, "Pick via"), 77);
+			intent.setDataAndType(Uri.parse(lastDirectory), "*/*");
+			startActivityForResult(intent, 77);
 			break;
 		case Menu.FIRST + 1:
-			intent = new Intent(ScreenRecognizing.this, ScreenGrayscaleDisplay.class);
+			intent = new Intent(ScreenFaceRecognizing.this, ScreenFaceGrayscaleDisplay.class);
 			startActivity(intent);
 			break;
 		default:
@@ -119,11 +117,13 @@ public class ScreenRecognizing extends Activity {
 		if(requestCode == 77 && resultCode == RESULT_OK){
 			String path = data.getData().getPath();
 			extraImagePath = path;
+			lastDirectory = (new File(path)).getParent();
+		}else{
+			extraImagePath = null;
 		}
 	}
 	
 	private void callCameraImageCapturer() {
-		Log.e(TAG, "SDCard state = "+Environment.getExternalStorageState());
 		if(Environment.getExternalStorageState().equals(Environment.MEDIA_REMOVED)){
 			Toast.makeText(this, "Please insert SDCard into your phone", Toast.LENGTH_SHORT).show();
 			return;
@@ -139,11 +139,16 @@ public class ScreenRecognizing extends Activity {
 	}
 
 	private void recognizeObject(){
+		if(extraImagePath == null){
+			Toast.makeText(ScreenFaceRecognizing.this, "Please capture your face !!!", 
+					Toast.LENGTH_LONG).show();
+			return;
+		}
 		int pos = mThresholdSpn.getSelectedItemPosition();
 		String[] thresholds = getResources().getStringArray(R.array.pref_confidence_threshold);
 		threshold = Float.parseFloat(thresholds[pos]);
 		
-		FaceRecognizer recog = new FaceRecognizer(ScreenRecognizing.this);
+		FaceRecognizer recog = new FaceRecognizer(ScreenFaceRecognizing.this);
 		recog.recognizeObjectByFace(extraImagePath);
 	}
 	

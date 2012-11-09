@@ -26,10 +26,12 @@
 			<Spinner android:id="@+id/spinner_threshold"
 				android:layout_width="fill_parent" android:layout_height="wrap_content"
 				android:entries="@array/pref_confidence_threshold" android:prompt="@string/pref_confidence_threshold" />
-			<Button android:id="@+id/btnCapture" android:layout_width="fill_parent"
-				android:layout_height="wrap_content" android:text="Capture"/>
-			<Button android:id="@+id/btnRecognize" android:layout_width="fill_parent"
-				android:layout_height="wrap_content" android:text="Recognize"/>
+			<ImageView android:id="@+id/btnCapture" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" 
+				android:src="@drawable/ic_camera"/>
+			<ImageView android:id="@+id/btnRecognize" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" 
+				android:src="@drawable/ic_mode_recognizing"/>
 		</LinearLayout>
 	</LinearLayout>
 

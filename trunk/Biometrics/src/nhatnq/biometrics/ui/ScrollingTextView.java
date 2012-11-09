@@ -5,6 +5,11 @@ import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.widget.TextView;
 
+/**
+ * @author Put by Nhat Nguyen
+ * Use this class to make text inside scrolling horizontally with each others
+ */
+
 public class ScrollingTextView extends TextView {
 
 	public ScrollingTextView(Context context, AttributeSet attrs, int defStyle) {

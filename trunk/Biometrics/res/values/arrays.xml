@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="pref_confidence_threshold">
-        <item >0.2</item>
-        <item >0.25</item>
-        <item >0.3</item>
-        <item >0.35</item>
-        <item >0.4</item>
-        <item >0.45</item>
         <item >0.5</item>
         <item >0.55</item>
         <item >0.6</item>
@@ -17,5 +11,15 @@
         <item >0.85</item>
         <item >0.9</item>
         <item >0.95</item>
+    </string-array>
+    
+    <string-array name="pref_single_or_multiple_objects">
+        <item >Just one for this device</item>
+        <item >Multiple objects with usernames</item>
+    </string-array>
+    
+    <string-array name="pref_single_or_multiple_entry_values">
+        <item >1</item>
+        <item >2</item>
     </string-array>
 </resources>

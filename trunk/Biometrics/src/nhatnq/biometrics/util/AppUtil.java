@@ -1,19 +1,8 @@
 package nhatnq.biometrics.util;
 
-import static com.googlecode.javacv.cpp.opencv_core.IPL_DEPTH_8U;
-import static com.googlecode.javacv.cpp.opencv_core.cvCreateImage;
-import static com.googlecode.javacv.cpp.opencv_core.cvGetSize;
-import static com.googlecode.javacv.cpp.opencv_highgui.cvLoadImage;
-import static com.googlecode.javacv.cpp.opencv_highgui.cvSaveImage;
-import static com.googlecode.javacv.cpp.opencv_imgproc.CV_RGB2GRAY;
-import static com.googlecode.javacv.cpp.opencv_imgproc.CV_THRESH_BINARY;
-import static com.googlecode.javacv.cpp.opencv_imgproc.CV_THRESH_OTSU;
-import static com.googlecode.javacv.cpp.opencv_imgproc.cvCvtColor;
-import static com.googlecode.javacv.cpp.opencv_imgproc.cvThreshold;
-
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.lang.ref.WeakReference;
 import java.util.Calendar;
 
@@ -29,34 +18,9 @@ import android.provider.MediaStore;
 import android.text.format.DateFormat;
 import android.widget.ImageView;
 
-import com.googlecode.javacv.cpp.opencv_core.CvSize;
-import com.googlecode.javacv.cpp.opencv_core.IplImage;
-
 public class AppUtil {
 	
-	/**
-	 * Create an gray-scale image from an RGB image
-	 * @param imgSource Path of RGB image
-	 * @return Path of gray-scale image
-	 */
-	public static String createGrayscaleImage(String imgSource){
-		IplImage src = cvLoadImage(imgSource);
-		// Create gray-scale image from original image
-		IplImage grayscale = cvCreateImage(new CvSize(src.width(), src.height()), IPL_DEPTH_8U, 1);
-		cvCvtColor(src, grayscale, CV_RGB2GRAY);
-		// Convert to binary image
-		//@link http://stackoverflow.com/questions/1585535/convert-rgb-to-black-white-in-opencv
-		IplImage im_bw = cvCreateImage(cvGetSize(grayscale),IPL_DEPTH_8U,1);
-		cvThreshold(grayscale, im_bw, 128, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
-		
-		// Generate file name for gray-scale image
-		String destName = imgSource.substring(imgSource.lastIndexOf("/")+1).replace("jpg", "pgm");
-		String destPath = AppConst.FACE_FOLDER + "/" + destName;
-		// Save loaded gray-scale image into SDcard
-		int res = cvSaveImage(destPath, grayscale);
-		if(res == -1) return null;
-		else return destPath;
-	}
+	
 	
 	/**
 	 * Get sample size for image resize rate
@@ -81,6 +45,13 @@ public class AppUtil {
 		return inSampleSize;
 	}
 	
+	/**
+	 * Get bitmap after resizing from local file
+	 * @param imgPath Path of image file
+	 * @param requestWidth
+	 * @param requestHeight
+	 * @return Resized bitmap
+	 */
 	public static Bitmap decodeBitmapResized(String imgPath, int requestWidth,
 			int requestHeight) {
 		BitmapFactory.Options options = new BitmapFactory.Options();
@@ -94,6 +65,13 @@ public class AppUtil {
 		return BitmapFactory.decodeFile(imgPath, options);
 	}
 	
+	/**
+	 * Apply image source for an ImageView
+	 * @param imgPath Path of image file
+	 * @param iv ImageView will be applied
+	 * @param reqWidth Width of resized image
+	 * @param reqHeight Height of resized image
+	 */
 	public static void loadBitmapFromPath(String imgPath, ImageView iv,
 			int reqWidth, int reqHeight) {
 		if(imgPath != null && ((new File(imgPath)).exists())){
@@ -102,11 +80,6 @@ public class AppUtil {
 		}
 	}
 
-	/**
-	 * Task for apply image for ImageView
-	 * @author oliver
-	 *
-	 */
 	private static class BDBitmapLoader extends AsyncTask<String, Void, Bitmap> {
 		WeakReference<ImageView> mIvReference;
 
@@ -135,10 +108,10 @@ public class AppUtil {
 	}
 	
 	/**
-	 * Get image file path from Uri, Uri was returned after picking
+	 * Get image file path from uri of that image
 	 * @param context
-	 * @param contentUri
-	 * @return
+	 * @param contentUri Uri of image that you picked via Gallery
+	 * @return Path of picked image
 	 */
 	public static String getFilePathFromUri(Context context, Uri contentUri) {
 		String resolvedPath = Uri.decode(contentUri.toString());
@@ -173,6 +146,12 @@ public class AppUtil {
 		return resolvedPath;
 	}
 	
+	/**
+	 * Create directory in sdcard using folder name and other sub-folder
+	 * @param folder Folder name
+	 * @param rest Sub-folder name
+	 * @return true if success
+	 */
 	public static boolean createDirectory(File folder, String rest){
 		if(! folder.exists()) folder.mkdir();
 		String[] tokens = rest.split("/");
@@ -215,24 +194,23 @@ public class AppUtil {
 	public static void clearTrainingSampleFromSdcard(boolean FaceOrVoice){
 		File f = new File(AppConst.APP_FOLDER);
 		final String filterAttribute = FaceOrVoice ? ".jpg" : ".amr";
-		String[] images = f.list(new FilenameFilter() {
+		File[] images = f.listFiles(new FileFilter() {
 			
 			@Override
-			public boolean accept(File arg0, String name){
-				if(name.toLowerCase().endsWith(filterAttribute)) return true;
-				return false;
+			public boolean accept(File pathname) {
+				return pathname.getAbsolutePath().toLowerCase().endsWith(filterAttribute);
 			}
 		});
 		
-		String path;
-		File ff;
-		for(String s : images){
-			path = AppConst.APP_FOLDER + "/" + s;
-			ff = new File(path);
+		for(File ff : images){
 			ff.delete();
 		}
 	}
 	
+	/**
+	 * Whether or not your SDcard is ready for using
+	 * @return true if SDcard is available
+	 */
 	public static boolean isSDCardAvailable(){
 		String state = Environment.getExternalStorageState();
 		return state.equals(Environment.MEDIA_MOUNTED);
@@ -253,10 +231,34 @@ public class AppUtil {
 		return "Voice_"+DateFormat.format("ddMMyyyy_kkmmss", cal).toString() +".amr";
 	}
 	
+	public static String generateHEImageNameAtThisTime(){
+		Calendar cal = Calendar.getInstance();
+		return "_he_"+DateFormat.format("ddMMyyyy_kkmmss", cal).toString() +".png";
+	}
+	
+	public static String generateDesaturationImageNameAtThisTime(){
+		Calendar cal = Calendar.getInstance();
+		return "_disa_"+DateFormat.format("ddMMyyyy_kkmmss", cal).toString() +".png";
+	}
+	
+	public static String generateFinalFaceImageNameAtThisTime(){
+		Calendar cal = Calendar.getInstance();
+		return DateFormat.format("ddMMyyyy_kkmmss", cal).toString() +".jpg";
+	}
+	
+	public static String generateTimeStringAtThisTime(){
+		Calendar cal = Calendar.getInstance();
+		return DateFormat.format("ddMMyyyy_kkmmss", cal).toString();
+	}
+	
+	public static String formatNumber2String(int num){
+    	if(num < 10) return "0"+num;
+    	else return ""+num;
+    }
+	
 	/**
-	 * After face detection process, create gray-scale face image
-	 * and save into application folder 
-	 * @param face Captured face
+	 * Save face bitmap to SDcard
+	 * @param face Captured face bitmap
 	 * @return true if saved, false if otherwise
 	 */
 	public static boolean saveFaceImage(Bitmap face){
