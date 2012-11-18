@@ -1,0 +1,12 @@
+<resources>
+
+    <style name="AppTheme" parent="android:Theme.Black" />
+
+    <style name="DialogNoTitleBarTranslucent" parent="@android:style/Theme.Translucent.NoTitleBar">
+    	<item name="android:windowFrame">@null</item>
+    	<item name="android:windowIsFloating">false</item>
+    	<item name="android:windowContentOverlay">@null</item>
+    	<item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
+    	<item name="android:windowSoftInputMode">stateUnspecified|adjustPan</item>        	
+    </style>
+</resources>

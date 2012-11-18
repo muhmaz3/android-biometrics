@@ -1,8 +1,8 @@
 package nhatnq.biometrics.util;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.lang.ref.WeakReference;
 import java.util.Calendar;
 
@@ -191,22 +191,35 @@ public class AppUtil {
 	 * Clear all samples in application folder
 	 * @param FaceOrVoice true if clear face images, false if clear voice samples
 	 */
-	public static void clearTrainingSampleFromSdcard(boolean FaceOrVoice){
-		File f = new File(AppConst.APP_FOLDER);
-		final String filterAttribute = FaceOrVoice ? ".jpg" : ".amr";
-		File[] images = f.listFiles(new FileFilter() {
+		public static void clearTrainingSampleFromSdcard(boolean FaceOrVoice){
+		File f ;
+		String path;
+		final String filterAttribute;
+		if (FaceOrVoice){
+			filterAttribute = ".jpg";
+			f = new File(AppConst.FACE_FOLDER);
+			path = AppConst.FACE_FOLDER;
+		}else{
+			filterAttribute = ".wav";
+			f = new File(AppConst.VOICE_FOLDER);
+			path = AppConst.VOICE_FOLDER;
+		}
+		String[] images = f.list(new FilenameFilter() {
 			
 			@Override
-			public boolean accept(File pathname) {
-				return pathname.getAbsolutePath().toLowerCase().endsWith(filterAttribute);
+			public boolean accept(File arg0, String name){
+				if(name.toLowerCase().endsWith(filterAttribute)) return true;
+				return false;
 			}
 		});
 		
-		for(File ff : images){
+		File ff;
+		for(String s : images){
+			String path1 = path + "/" + s;
+			ff = new File(path1);
 			ff.delete();
 		}
 	}
-	
 	/**
 	 * Whether or not your SDcard is ready for using
 	 * @return true if SDcard is available
@@ -228,7 +241,7 @@ public class AppUtil {
 	
 	public static String generateVoiceNameAtThisTime(){
 		Calendar cal = Calendar.getInstance();
-		return "Voice_"+DateFormat.format("ddMMyyyy_kkmmss", cal).toString() +".amr";
+		return "Voice_"+DateFormat.format("ddMMyyyy_kkmmss", cal).toString() +".wav";
 	}
 	
 	public static String generateHEImageNameAtThisTime(){

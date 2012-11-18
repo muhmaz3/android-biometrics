@@ -16,6 +16,7 @@ public class AppConst {
 	public static final String FACE_FOLDER = APP_FOLDER + "/" + "face";
 	public static final String VOICE_FOLDER = APP_FOLDER + "/" + "voice"; 
 	public static final String PREFERENCE_NAME = "app_preference";
+	public static final String TRAING_VOICE_FILE_PATH = APP_FOLDER + "/" + "Training_Voice.txt";
 	
 	//Ratio: 5:6 ~ width:height of image
 //	public static final float IMG_X_FACTOR = 1.15f;	// = 0.23*5 (tested 1.35)

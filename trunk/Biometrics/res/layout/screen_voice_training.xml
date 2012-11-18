@@ -4,23 +4,17 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
-    <Gallery
-        android:id="@+id/gallery"
-        android:layout_width="fill_parent"
-        android:layout_height="52dp"
-        android:background="@android:color/darker_gray"
-        android:gravity="center"
-        android:spacing="2dp" />
+    
 
     <!-- Replace this ImageView by another layout,
     because U should show an audio player when u selects a voice sample -->
     
-    <ImageView
-        android:id="@+id/ivFace"
+    <ListView
+        android:id="@+id/listview_voice"
         android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:src="@drawable/ic_launcher" />
+        android:layout_height="wrap_content"
+        android:layout_weight = "1"
+    />
 
     <LinearLayout
         android:layout_width="fill_parent"

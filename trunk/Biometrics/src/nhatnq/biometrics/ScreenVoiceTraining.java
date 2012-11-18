@@ -1,56 +1,57 @@
 package nhatnq.biometrics;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import nhatnq.biometrics.face.FaceHelper;
-import nhatnq.biometrics.face.FaceTrainer;
-import nhatnq.biometrics.util.AppConst;
 import nhatnq.biometrics.util.AppUtil;
+import nhatnq.biometrics.util.IconContextMenu;
 import nhatnq.biometrics.voice.VoiceHelper;
 import nhatnq.biometrics.voice.VoiceTrainer;
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.content.res.Resources;
 import android.media.AudioManager;
-import android.media.ExifInterface;
 import android.media.MediaPlayer;
-import android.media.MediaRecorder;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.BaseAdapter;
-import android.widget.Gallery;
 import android.widget.ImageView;
-import android.widget.ImageView.ScaleType;
+import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class ScreenVoiceTraining extends Activity {
 
 	private static final String TAG = ScreenVoiceTraining.class.getCanonicalName();
 	private static final int MIN_VOICE_SAMPLE = 2;
-	private static final int REQ_VOICE_RECORDER = 8;
+	private static final int REQ_RECORD_VOICE = 7;
 	
-	private Gallery mGallery;
-	private GalleryApdapter mAdapter;
-	private List<String> mVoicePaths;
+	private List<String> mVoicePaths;// = new ArrayList<String>();
 	private MediaPlayer mPlayer;
-	private VoiceHelper mVoiceHelper;
+	private ListView mListView;
+	private VoiceAdapter mAdapter;
+	private List<VoiceHelper> voiceInfoSet;
+	
+	private int TouchPosition;
+	// For Menu 
+	private final int CONTEXT_MENU_ID = 1;
+	private IconContextMenu iconContextMenu = null;
+	
+	private final int MENU_ITEM_1_ACTION = 1;
+	private final int MENU_ITEM_2_ACTION = 2;
+	private final int MENU_ITEM_3_ACTION = 3;
+	private final int MENU_ITEM_4_ACTION = 4;
 	
 	/**
 	 * Change screen layout if you want, it depends on you.
@@ -78,24 +79,92 @@ public class ScreenVoiceTraining extends Activity {
 		bt = (ImageView) findViewById(R.id.btnModeRecognizing);
 		bt.setOnClickListener(OnClickButtonHandler);
 		
-		mGallery = (Gallery) findViewById(R.id.gallery);
-		mGallery.setOnItemClickListener(new OnItemClickListener() {
+		if(voiceInfoSet == null){
+			voiceInfoSet = new ArrayList<VoiceHelper>();
+		}
+		
+		mListView = (ListView) findViewById(R.id.listview_voice);
+        mAdapter = new VoiceAdapter(this);
+        mListView.setAdapter(mAdapter);
+        
+        mListView.setOnItemLongClickListener(itemLongClickHandler);
+       
+        mListView.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
-			public void onItemClick(AdapterView<?> adapter, View v, int pos,
+			public void onItemClick(AdapterView<?> arg0, View arg1, int pos,
 					long id) {
-				String src = (String)adapter.getItemAtPosition(pos);
-				//TODO Show an audio player in center space
-//				playVoiceSample(src);
+				TouchPosition = pos;
+				showDialog(CONTEXT_MENU_ID);
+				
+				// For best GUI, diaplay a small dialog to play/pause/stop player
 			}
-			
+        	
 		});
-		
-		fetchLocalVoices();
-    	mAdapter = new GalleryApdapter(this);
-		mGallery.setAdapter(mAdapter);
+        
+        Resources res = getResources();
+        
+      //init the menu
+        iconContextMenu = new IconContextMenu(this, CONTEXT_MENU_ID);
+        iconContextMenu.addItem(res, "Delete",  MENU_ITEM_1_ACTION);
+        iconContextMenu.addItem(res, "Delete all",  MENU_ITEM_2_ACTION);
+//        iconContextMenu.addItem(res, "Play",  MENU_ITEM_3_ACTION);
+//        iconContextMenu.addItem(res, "Stop",  MENU_ITEM_4_ACTION);
+        
+      //set onclick listener for context menu
+        iconContextMenu.setOnClickListener(new IconContextMenu.IconContextMenuOnClickListener() {
+			@Override
+			public void onClick(int menuId) {
+				switch(menuId) {
+				case MENU_ITEM_1_ACTION:
+					voiceInfoSet.remove(TouchPosition);
+					mAdapter.notifyDataSetChanged();
+					break;
+				case MENU_ITEM_2_ACTION:
+					int size = voiceInfoSet.size();
+					for(int i = 0; i < size; i++){
+						voiceInfoSet.remove(0);
+					}
+					mAdapter.notifyDataSetChanged();					
+					break;
+				case MENU_ITEM_3_ACTION:
+					
+					break;
+				case MENU_ITEM_4_ACTION:
+					Toast.makeText(getApplicationContext(), "You've clicked on menu item 4", 1000).show();
+					break;
+				}
+			}
+		});
+   
 	}
-	    
+	
+	/**
+     * list item long click handler
+     * used to show the context menu
+     */
+    private OnItemLongClickListener itemLongClickHandler = new OnItemLongClickListener() {
+
+		@Override
+		public boolean onItemLongClick(AdapterView<?> parent, View view,
+				int position, long id) {
+			TouchPosition = position;
+			showDialog(CONTEXT_MENU_ID);
+			return true;
+		}
+	};
+
+	/**
+	 * create context menu
+	 */
+	@Override
+	protected Dialog onCreateDialog(int id) {
+		if (id == CONTEXT_MENU_ID) {
+			return iconContextMenu.createMenu("Option");
+		}
+		return super.onCreateDialog(id);
+	}
+	
     View.OnClickListener OnClickButtonHandler = new View.OnClickListener() {
 		
 		@Override
@@ -106,16 +175,26 @@ public class ScreenVoiceTraining extends Activity {
 				 * TODO You have to show another screen or design a small layout (in center space) 
 				 * for recording voice
 				 */
-//				recordVoice();
+				Intent intent = new Intent(ScreenVoiceTraining.this, ScreenVoiceRecording.class);
+				startActivityForResult(intent, REQ_RECORD_VOICE);
+				
 				break;
 			case R.id.btnSave:
+				if (!AppUtil.isSDCardAvailable()) {
+					Toast.makeText(ScreenVoiceTraining.this, "Please insert SD card to continue training!", Toast.LENGTH_SHORT).show();
+					break;
+				}
 				saveVoice();
 				break;
 			case R.id.btnSettings:
-				Intent intent = new Intent(ScreenVoiceTraining.this, ScreenSettings.class);
-				startActivity(intent);
+				Intent i = new Intent(ScreenVoiceTraining.this, ScreenSettings.class);
+				startActivity(i);
 				break;
 			case R.id.btnModeRecognizing:
+				if (!AppUtil.isSDCardAvailable()) {
+					Toast.makeText(ScreenVoiceTraining.this, "Please insert SD card to continue recognizer!", Toast.LENGTH_SHORT).show();
+					break;
+				}
 				Intent intent1 = new Intent(ScreenVoiceTraining.this, ScreenVoiceRecognizing.class);
 				startActivity(intent1);
 				break;
@@ -123,21 +202,19 @@ public class ScreenVoiceTraining extends Activity {
 		}
 	};
 	
-	public boolean onCreateOptionsMenu(Menu menu) {
-		menu.add(Menu.CATEGORY_ALTERNATIVE, Menu.FIRST, Menu.NONE, "Clear training voice files");
-		return true;
-	};
-	
+		
 	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case Menu.FIRST:
-			AppUtil.clearTrainingSampleFromSdcard(true);
-			mVoicePaths.clear();
-			mAdapter.notifyDataSetChanged();
-			break;
-		}
-		return true;
+	public void onCreateContextMenu(ContextMenu contextMenu,
+	                                View v,
+	                                ContextMenu.ContextMenuInfo menuInfo) {
+	    AdapterView.AdapterContextMenuInfo info =
+	            (AdapterView.AdapterContextMenuInfo) menuInfo;
+	     String selectedWord = ((TextView) info.targetView).getText().toString();
+//	    long selectedWordId = info.id;
+
+	    contextMenu.setHeaderTitle(selectedWord);
+	    contextMenu.add(Menu.CATEGORY_ALTERNATIVE, Menu.FIRST, Menu.NONE, "1");
+	    contextMenu.add(Menu.CATEGORY_ALTERNATIVE, Menu.FIRST, Menu.NONE, "2");
 	}
 	
 	@Override
@@ -149,51 +226,7 @@ public class ScreenVoiceTraining extends Activity {
 		}
 	}
 	
-	private class GalleryApdapter extends BaseAdapter{
-		
-		private LayoutInflater mInflater;
-		
-		public GalleryApdapter(Context context){
-			mInflater = LayoutInflater.from(context);
-		}
-		
-		@Override
-		public int getCount() {
-			return mVoicePaths.size();
-		}
-
-		@Override
-		public String getItem(int arg0) {
-			return mVoicePaths.get(arg0);
-		}
-
-		@Override
-		public long getItemId(int arg0) {
-			return arg0;
-		}
-
-		@Override
-		public View getView(int pos, View convertView, ViewGroup parent) {
-			if(convertView == null){
-				convertView = mInflater.inflate(R.layout.view_item_gallery, null);
-			}
-
-			String src = getItem(pos);
-//			Bitmap bm = processBitmap4Display(src);
-			Bitmap bm = BitmapFactory.decodeFile(src);
-			bm = Bitmap.createScaledBitmap(bm, 64, 64, false);
-			if(bm != null){
-//    			AppUtil.loadBitmapFromPath(extraImagePath, mIvFace, 320, 240);
-				((ImageView)convertView.findViewById(R.id.imageview)).setImageBitmap(bm);
-    			bm = null;
-    		}
-			
-			return convertView;
-		}
-		
-	}
-	
-	private void fetchLocalVoices(){
+	/*private void fetchLocalVoices(){
 		File folder = new File(AppConst.APP_FOLDER);
 		if(!folder.exists()) AppUtil.createAppDirectory();
 
@@ -218,18 +251,7 @@ public class ScreenVoiceTraining extends Activity {
 			Log.i(TAG, ".Local voice = " + f.getAbsolutePath());
 		}
 	}
-		
-	private void recordVoice(){
-		if(mVoiceHelper == null){
-			mVoiceHelper = new VoiceHelper();
-		}
-		mVoiceHelper.startVoiceRecorder();
-	}
-	
-	private String stopRecordVoice(){
-		return mVoiceHelper.stopVoiceRecoder();
-	}
-	
+	*/		
 	private void playVoiceSample(String path){
 		if(mPlayer != null) mPlayer.reset();
 		else mPlayer = new MediaPlayer();
@@ -259,12 +281,85 @@ public class ScreenVoiceTraining extends Activity {
 	}
 	
 	private void saveVoice(){
-		if(mVoicePaths.size() < MIN_VOICE_SAMPLE){
+		mVoicePaths = new ArrayList<String>();
+		for(int i = 0 ; i< voiceInfoSet.size(); i++){
+			mVoicePaths.add(voiceInfoSet.get(i).getPath());
+		}
+		if(voiceInfoSet.size() < MIN_VOICE_SAMPLE){
 			Toast.makeText(this, "Please record 2 voices at least!!!", Toast.LENGTH_LONG).show();
 			return;
-		}
+		}		
 		
 		VoiceTrainer trainer = new VoiceTrainer(ScreenVoiceTraining.this);
-		trainer.startTraining(mVoicePaths);
+		trainer.saveVoiceData(mVoicePaths);
+		
+		// Clean ListView
+		int size = voiceInfoSet.size();
+		for (int i = 0; i < size; i++){
+			voiceInfoSet.remove(0);
+//			mVoicePaths.remove(0);
+		}
+		mAdapter.notifyDataSetChanged();
+		
 	}
+	
+	  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+	    	super.onActivityResult(requestCode, resultCode, data);
+	    	if(requestCode == REQ_RECORD_VOICE && resultCode==RESULT_OK){
+	    		String newVoicePath = data.getExtras().getString("path");
+	    		String newVoiceDuration = data.getExtras().getString("duration");
+	    		
+	    		Log.i("size", newVoicePath + "  "+newVoiceDuration);
+	    		
+	    		voiceInfoSet.add(new VoiceHelper(newVoicePath, newVoiceDuration));
+	    		mAdapter.notifyDataSetChanged();
+	    	}
+	    }
+
+	  private class VoiceAdapter extends BaseAdapter{
+
+	    	private LayoutInflater mInflater;
+	    	
+	    	public VoiceAdapter(Context context){
+	    		mInflater = LayoutInflater.from(context);
+	    	}
+	    	
+			@Override
+			public int getCount() {
+				return voiceInfoSet.size();
+			}
+
+			@Override
+			public Object getItem(int position) {
+				return voiceInfoSet.get(position);
+			}
+
+			@Override
+			public long getItemId(int position) {
+				return position;
+			}
+
+			@Override
+			public View getView(int position, View convertView, ViewGroup parent) {
+				VoiceViewHolder holder;
+				if(convertView == null){
+					convertView = mInflater.inflate(R.layout.view_listview_voice, null);
+					holder = new VoiceViewHolder();
+					holder.tvtDuration = (TextView) convertView.findViewById(R.id.txt_lv_duration);
+					holder.tvtPath = (TextView) convertView.findViewById(R.id.txt_lv_path);
+					convertView.setTag(holder);
+				}else holder = (VoiceViewHolder)convertView.getTag();
+				
+				VoiceHelper voice = (VoiceHelper) getItem(position);
+				holder.tvtDuration.setText(voice.getDuration());
+				holder.tvtPath.setText(voice.getPath());
+				return convertView;
+			}
+	    }
+	      
+	  static class VoiceViewHolder{
+	    	TextView tvtDuration;
+	    	TextView tvtPath;
+	    }
+	    
 }
