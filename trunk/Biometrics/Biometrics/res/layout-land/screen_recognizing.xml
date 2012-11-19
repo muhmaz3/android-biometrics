@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent" android:layout_height="match_parent"
+	android:orientation="vertical">
+
+	<TextView android:id="@+id/tvStatus" android:layout_width="fill_parent"
+		android:layout_height="wrap_content" 
+		android:gravity="center" android:text="Hello, NhatNQ"
+		android:textColor="#ff0000" 
+		android:background="@android:color/darker_gray"
+		android:padding="6dp"/>
+	<LinearLayout android:layout_width="fill_parent"
+		android:layout_height="fill_parent">
+		<ImageView android:id="@+id/ivFace" android:layout_width="0dp"
+			android:layout_height="fill_parent" android:layout_weight="1"
+			android:src="@drawable/ic_launcher" />
+		<LinearLayout android:layout_width="96dp"
+			android:layout_height="fill_parent" android:orientation="vertical"
+			android:background="@android:color/darker_gray" android:gravity="center">
+			<nhatnq.biometrics.ui.ScrollingTextView android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:ellipsize="marquee"
+				android:singleLine="true" 
+				android:text="Confidence threshold"
+				android:textColor="#00ffff" />
+			<Spinner android:id="@+id/spinner_threshold"
+				android:layout_width="fill_parent" android:layout_height="wrap_content"
+				android:entries="@array/pref_confidence_threshold" android:prompt="@string/pref_confidence_threshold" />
+			<ImageView android:id="@+id/btnCapture" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" 
+				android:src="@drawable/ic_camera"/>
+			<ImageView android:id="@+id/btnRecognize" android:layout_width="fill_parent"
+				android:layout_height="wrap_content" 
+				android:src="@drawable/ic_mode_recognizing"/>
+		</LinearLayout>
+	</LinearLayout>
+
+</LinearLayout>
