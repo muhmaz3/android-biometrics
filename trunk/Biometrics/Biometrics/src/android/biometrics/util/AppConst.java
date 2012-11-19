@@ -26,4 +26,6 @@ public class AppConst {
 	
 	public static final String KEY_FACE_TRAINED = "face_trained";
 	public static final String KEY_VOICE_TRAINED = "voice_trained";
+	
+	public static final int THRESHOLD_VOICE = 600;
 }

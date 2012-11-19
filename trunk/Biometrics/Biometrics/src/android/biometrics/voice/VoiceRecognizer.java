@@ -9,6 +9,7 @@ import lib.comirva.audio.PointList;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.biometrics.R;
+import android.biometrics.util.AppConst;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.AsyncTask;
@@ -89,7 +90,7 @@ public class VoiceRecognizer {
 		private int getDistanceThreshold(){
 			SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
 			return Integer.parseInt(pref.getString(
-					context.getString(R.string.pref_voice_distance_threshold_key), "600"));
+					context.getString(R.string.pref_voice_distance_threshold_key), String.valueOf(AppConst.THRESHOLD_VOICE)));
 		}
 	}
 }
