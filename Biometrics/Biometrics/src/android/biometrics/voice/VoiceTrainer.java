@@ -17,8 +17,8 @@ import android.util.Log;
 
 public class VoiceTrainer {
 	private static final String TAG = VoiceTrainer.class.getCanonicalName();
-	private List<AudioFeatureExtractor> arrayFeatureExtractionTrainSet = 
-			new ArrayList<AudioFeatureExtractor>();
+//	private List<AudioFeatureExtractor> arrayFeatureExtractionTrainSet = 
+//			new ArrayList<AudioFeatureExtractor>();
 	private Context mBase;
 	private AudioFeatureExtractor featureExtractor = new TimbreDistributionExtractor();
 
@@ -74,7 +74,7 @@ public class VoiceTrainer {
 					ais.close();
 
 					// TODO static field or not, depends on
-					arrayFeatureExtractionTrainSet.add(featureExtractor);
+//					arrayFeatureExtractionTrainSet.add(featureExtractor);
 				} catch (Exception e) {
 					Log.e(TAG,
 							"Problem while processing:"+ file.getAbsolutePath());
