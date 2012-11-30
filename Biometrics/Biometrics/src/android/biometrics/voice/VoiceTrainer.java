@@ -9,20 +9,25 @@ import lib.comirva.TimbreDistributionExtractor;
 import lib.comirva.audio.AudioFeature;
 import lib.sound.sampled.AudioInputStream;
 import lib.sound.sampled.AudioSystem;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.biometrics.R;
-import android.content.Context;
+import android.biometrics.ScreenFaceTraining;
+import android.biometrics.util.AppConst;
+import android.biometrics.util.AppUtil;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.Toast;
 
 public class VoiceTrainer {
 	private static final String TAG = VoiceTrainer.class.getCanonicalName();
 //	private List<AudioFeatureExtractor> arrayFeatureExtractionTrainSet = 
 //			new ArrayList<AudioFeatureExtractor>();
-	private Context mBase;
+	private Activity mBase;
 	private AudioFeatureExtractor featureExtractor = new TimbreDistributionExtractor();
 
-	public VoiceTrainer(Context context) {
+	public VoiceTrainer(Activity context) {
 		mBase = context;
 	}
 
@@ -79,6 +84,7 @@ public class VoiceTrainer {
 					Log.e(TAG,
 							"Problem while processing:"+ file.getAbsolutePath());
 					e.printStackTrace();
+					return false;
 				}
 			}
 			return true;
@@ -96,6 +102,22 @@ public class VoiceTrainer {
 		protected void onPostExecute(Boolean result) {
 			super.onPostExecute(result);
 			dialog.dismiss();
+			if(!result){
+				Toast.makeText(mBase, mBase.getString(R.string.train_failed), 
+						Toast.LENGTH_LONG).show();
+			}else{
+				AppUtil.savePreference(mBase, AppConst.KEY_VOICE_TRAINED, true);
+			}
+			
+			int recogMode = AppUtil.getRecognitionMode(mBase);
+			switch (recogMode) {
+			case AppConst.RECOGNITION_MODE_VOICE_FIRST:
+				Intent intent = new Intent(mBase, ScreenFaceTraining.class);
+				mBase.startActivity(intent);
+				break;
+			}
+			
+			mBase.finish();
 		}
 	}
 }

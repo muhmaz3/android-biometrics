@@ -9,11 +9,13 @@ import android.biometrics.face.FaceRecognizer;
 import android.biometrics.util.AppConst;
 import android.biometrics.util.AppUtil;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -22,7 +24,7 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 public class ScreenFaceRecognizing extends Activity {
-	private static final String TAG = ScreenFaceRecognizing.class.getCanonicalName();
+//	private static final String TAG = ScreenFaceRecognizing.class.getCanonicalName();
 	private static final int REQ_CAMERA_CAPTURE = 7;
     private String extraImagePath;
 	private Spinner mThresholdSpn;
@@ -37,6 +39,7 @@ public class ScreenFaceRecognizing extends Activity {
 		setContentView(R.layout.screen_face_recognizing);
 		
 		mThresholdSpn = (Spinner) findViewById(R.id.spinner_threshold);
+		mThresholdSpn.setVisibility(View.GONE);
 		mIvFace = (ImageView) findViewById(R.id.ivFace);
 		
 		ImageView bt;
@@ -54,10 +57,9 @@ public class ScreenFaceRecognizing extends Activity {
 		super.onResume();
 		
 		if(extraImagePath != null){
-			if(extraImagePath.endsWith(FaceHelper.PGM_EXTENSION)) {
-				return;
-			}
-    		AppUtil.loadBitmapFromPath(extraImagePath, mIvFace, 320, 240);
+			Bitmap bm = FaceHelper.processBitmap4Display(extraImagePath);
+			mIvFace.setImageBitmap(bm);
+			bm = null;
     	}
 	};
 	
@@ -65,7 +67,6 @@ public class ScreenFaceRecognizing extends Activity {
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 		if(extraImagePath != null){
-			Log.e(TAG, "onSaveInstanceState:extra->"+extraImagePath);
 			outState.putString("extra_image_path", extraImagePath);
 		}
 	}
@@ -106,9 +107,10 @@ public class ScreenFaceRecognizing extends Activity {
 	};
 	
 	public boolean onCreateOptionsMenu(android.view.Menu menu) {
-		menu.add(Menu.CATEGORY_ALTERNATIVE, Menu.FIRST, Menu.NONE, "Pick Gallery");
-		menu.add(Menu.CATEGORY_ALTERNATIVE, Menu.FIRST+1, Menu.NONE, "View gray-scale");
-		return false;
+//		menu.add(Menu.CATEGORY_ALTERNATIVE, Menu.FIRST, Menu.NONE, "Pick Gallery");
+//		menu.add(Menu.CATEGORY_ALTERNATIVE, Menu.FIRST+1, Menu.NONE, "View gray-scale");
+		menu.add(Menu.CATEGORY_ALTERNATIVE, Menu.FIRST+2, Menu.NONE, "Clear training data");
+		return true;
 	};
 	
 	@Override
@@ -124,7 +126,11 @@ public class ScreenFaceRecognizing extends Activity {
 			intent = new Intent(ScreenFaceRecognizing.this, ScreenFaceGrayscaleDisplay.class);
 			startActivity(intent);
 			break;
-		default:
+		case Menu.FIRST + 2:
+			AppUtil.clearTrainingData(true);
+			finish();
+			intent = new Intent(ScreenFaceRecognizing.this, ScreenFaceTraining.class);
+			startActivity(intent);
 			break;
 		}
 		return true;
@@ -133,10 +139,11 @@ public class ScreenFaceRecognizing extends Activity {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
-		if(requestCode == 77 && resultCode == RESULT_OK){
-			String path = data.getData().getPath();
-			extraImagePath = path;
-			lastDirectory = (new File(path)).getParent();
+		if(requestCode == REQ_CAMERA_CAPTURE && resultCode == RESULT_OK){
+			lastDirectory = (new File(extraImagePath)).getParent();
+			Bitmap bm = FaceHelper.processBitmap4Display(extraImagePath);
+			mIvFace.setImageBitmap(bm);
+			bm = null;
 		}else{
 			extraImagePath = null;
 		}
@@ -148,17 +155,22 @@ public class ScreenFaceRecognizing extends Activity {
 		Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 		intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(imageFile));
 		extraImagePath = imageFile.getAbsolutePath();
-		
+
 		startActivityForResult(intent, REQ_CAMERA_CAPTURE);
 	}
 
 	private void recognize(){
-		int pos = mThresholdSpn.getSelectedItemPosition();
-		String[] thresholds = getResources().getStringArray(R.array.pref_confidence_threshold);
-		threshold = Float.parseFloat(thresholds[pos]);
+		threshold = getConfidenceThreshold();
 		
 		FaceRecognizer recog = new FaceRecognizer(ScreenFaceRecognizing.this);
 		recog.recognize(extraImagePath);
+	}
+	
+	private float getConfidenceThreshold(){
+		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+		return Float.parseFloat(pref.getString(
+				getString(R.string.pref_confidence_threshold_key), 
+				""+AppConst.DEFAULT_FACE_THRESHOLD));
 	}
 	
 }

@@ -16,8 +16,7 @@ public class AppConst {
 	public static final String FACE_FOLDER = APP_FOLDER + "/" + "face";
 	public static final String VOICE_FOLDER = APP_FOLDER + "/" + "voice"; 
 	public static final String FACE_DATA_FILE_PATH = FACE_FOLDER + "/" + "face_data.xml";
-	public static final String TRAING_VOICE_FILE_PATH = VOICE_FOLDER + "/" + "voice_data.txt";
-	public static final String PREFERENCE_NAME = "app_preference";
+	public static final String VOICE_DATA_FILE_PATH = VOICE_FOLDER + "/" + "voice_data.txt";
 	
 	public static final float IMG_X_FACTOR = 1.19f;	// = 0.17*7
 	public static final float IMG_Y_FACTOR = 1.36f;	// = 0.17*8
@@ -26,6 +25,13 @@ public class AppConst {
 	
 	public static final String KEY_FACE_TRAINED = "face_trained";
 	public static final String KEY_VOICE_TRAINED = "voice_trained";
+	public static final String KEY_RECOGNITION_MODE = "recognition_mode";
+	public static final int RECOGNITION_MODE_JUST_FACE = 0;
+	public static final int RECOGNITION_MODE_JUST_VOICE = 1;
+	public static final int RECOGNITION_MODE_FACE_FIRST = 2;
+	public static final int RECOGNITION_MODE_VOICE_FIRST = 3;
+	public static final int RECOGNITION_MODE_BOTH = 4;
 	
-	public static final int THRESHOLD_VOICE = 600;
+	public static final int DEFAULT_VOICE_THRESHOLD = 600;
+	public static final float DEFAULT_FACE_THRESHOLD = 0.7f;
 }

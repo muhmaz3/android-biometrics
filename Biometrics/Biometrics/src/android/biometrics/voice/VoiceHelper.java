@@ -15,10 +15,8 @@ import lib.comirva.audio.Matrix;
 import lib.comirva.audio.PointList;
 import android.biometrics.util.AppConst;
 import android.biometrics.util.AppUtil;
-import android.util.Log;
 
 public class VoiceHelper {
-	private static final String TAG = VoiceHelper.class.getCanonicalName();
 	public static final String VOICE_EXTENSION = ".wav";
 	
 	/**
@@ -32,7 +30,7 @@ public class VoiceHelper {
 		}
 		
 		//Now create the file in the above directory and write the contents into it
-		File file = new File(AppConst.TRAING_VOICE_FILE_PATH);
+		File file = new File(AppConst.VOICE_DATA_FILE_PATH);
 		File folder = new File(AppConst.VOICE_FOLDER);
 		try {
 			if(! folder.exists()) AppUtil.createAppDirectory();
@@ -46,7 +44,6 @@ public class VoiceHelper {
 				Matrix kmVector = km.getMean(k);
 			    for (int j=0; j < 20; j++) {
 					osw.write(Double.toString(kmVector.get(j, 0)) + " ");
-			        Log.e(TAG, kmVector.get(j,0) + " ");
 			    }
 			    osw.write("\n");
 			}     
@@ -65,7 +62,7 @@ public class VoiceHelper {
 	 * @return List of PointList
 	 */
 	public static ArrayList<PointList> readVoiceDataToPointList(){		
-		File file = new File(AppConst.TRAING_VOICE_FILE_PATH);
+		File file = new File(AppConst.VOICE_DATA_FILE_PATH);
 		ArrayList<PointList> arrayPointList = new ArrayList<PointList>();
 		
 		if (file.exists()) {

@@ -33,13 +33,14 @@ import static com.googlecode.javacv.cpp.opencv_legacy.cvEigenDecomposite;
 import java.util.ArrayList;
 import java.util.List;
 
-
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.biometrics.R;
 import android.biometrics.ScreenFaceTraining;
+import android.biometrics.ScreenVoiceTraining;
 import android.biometrics.util.AppConst;
 import android.biometrics.util.AppUtil;
-import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.Toast;
@@ -72,9 +73,9 @@ public class FaceTrainer {
 	/** the projected training faces */
 	CvMat projectedTrainFaceMat;
 	
-	private Context mBase;
+	private Activity mBase;
 	
-	public FaceTrainer(Context context){
+	public FaceTrainer(Activity context){
 		mBase = context;
 	}
 	
@@ -145,12 +146,23 @@ public class FaceTrainer {
 		protected void onPostExecute(Boolean result) {
 			super.onPostExecute(result);
 			dialog.dismiss();
-			if(result == false){
+			if(! result){
 				Toast.makeText(mBase, mBase.getString(R.string.train_failed), 
 						Toast.LENGTH_LONG).show();
 			}else{
 				AppUtil.savePreference(mBase, AppConst.KEY_FACE_TRAINED, true);
 			}
+			
+			int recogMode = AppUtil.getRecognitionMode(mBase);
+			switch (recogMode) {
+			case AppConst.RECOGNITION_MODE_FACE_FIRST:
+			case AppConst.RECOGNITION_MODE_BOTH:
+				Intent intent = new Intent(mBase, ScreenVoiceTraining.class);
+				mBase.startActivity(intent);
+				break;
+			}
+			
+			mBase.finish();
 		}
 
 	    public boolean learn() {

@@ -5,6 +5,7 @@ import java.io.FileFilter;
 import java.lang.ref.WeakReference;
 import java.util.Calendar;
 
+import android.biometrics.R;
 import android.biometrics.face.FaceHelper;
 import android.biometrics.voice.VoiceHelper;
 import android.content.Context;
@@ -27,6 +28,22 @@ public class AppUtil {
 		SharedPreferences.Editor editor = pref.edit();
 		editor.putBoolean(key, value);
 		editor.commit();
+	}
+	
+	public static void savePreference(Context context, String key, String value){
+		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
+		SharedPreferences.Editor editor = pref.edit();
+		editor.putString(key, value);
+		editor.commit();
+	}
+
+	public static int getRecognitionMode(Context context){
+		SharedPreferences pref = PreferenceManager
+				.getDefaultSharedPreferences(context);
+		return Integer.parseInt(pref.getString(
+				context.getString(R.string.pref_recognition_mode_key), 
+				""+AppConst.RECOGNITION_MODE_JUST_FACE)
+		);
 	}
 	
 	public static boolean isTrained(Context context, String key){
@@ -159,9 +176,10 @@ public class AppUtil {
 		} else if (resolvedPath.contains("/mnt")) {
 			resolvedPath = resolvedPath.substring(resolvedPath.indexOf("/mnt"));
 		} else if (!resolvedPath.contains("/mnt")
-				&& resolvedPath.contains("/sdcard")) {
+				&& resolvedPath.contains(Environment.getExternalStorageDirectory().getPath())) {
 			resolvedPath = "/mnt"
-					+ resolvedPath.substring(resolvedPath.indexOf("/sdcard"));
+					+ resolvedPath.substring(
+							resolvedPath.indexOf(Environment.getExternalStorageDirectory().getPath()));
 		} else
 			return null;
 
@@ -215,7 +233,7 @@ public class AppUtil {
 	}
 
 	/**
-	 * Clear all samples in application folder
+	 * Clear all samples in application folder and data file in training process
 	 * 
 	 * @param FaceOrVoice
 	 *            true if clear face images, false if clear voice samples
@@ -225,15 +243,10 @@ public class AppUtil {
 		final String filterAttribute;
 		if (FaceOrVoice) {
 			filterAttribute = FaceHelper.JPG_EXTENSION;
-			
-			File face_data = new File(AppConst.FACE_DATA_FILE_PATH);
-			if(face_data.exists()) face_data.delete();
 		} else {
 			filterAttribute = VoiceHelper.VOICE_EXTENSION;
-			
-			File voice_data = new File(AppConst.TRAING_VOICE_FILE_PATH);
-			if(voice_data.exists()) voice_data.delete();
 		}
+		clearTrainingData(FaceOrVoice);
 		
 		File[] files = f.listFiles(new FileFilter() {
 			
@@ -243,11 +256,23 @@ public class AppUtil {
 			}
 		});
 
+		if(files == null) return;
 		for (File ff : files) {
 			ff.delete();
 		}
 	}
 
+	public static void clearTrainingData(boolean FaceOrVoice){
+		String filepath;
+		if(FaceOrVoice){
+			filepath = AppConst.FACE_DATA_FILE_PATH;
+		}else{
+			filepath = AppConst.VOICE_DATA_FILE_PATH;
+		}
+		File face_data = new File(filepath);
+		if(face_data.exists()) face_data.delete();
+	}
+	
 	/**
 	 * Whether or not your SDcard is ready for using
 	 * 
@@ -258,39 +283,34 @@ public class AppUtil {
 		return state.equals(Environment.MEDIA_MOUNTED);
 	}
 
+	public static String generateVoiceNameAtThisTime() {
+		Calendar cal = Calendar.getInstance();
+		return DateFormat.format("yyyyMMdd_kkmmss", cal).toString()
+				+ VoiceHelper.VOICE_EXTENSION;
+	}
+	
 	public static String generateFaceNameAtThisTime() {
 		Calendar cal = Calendar.getInstance();
-		return "Face_" + DateFormat.format("ddMMyyyy_kkmmss", cal).toString()
+		return DateFormat.format("yyyyMMdd_kkmmss", cal).toString()
 				+ FaceHelper.JPG_EXTENSION;
 	}
 
 	public static String generateGrayscaleFaceNameAtThisTime() {
 		Calendar cal = Calendar.getInstance();
-		return "Face_8U_"
-				+ DateFormat.format("ddMMyyyy_kkmmss", cal).toString() + FaceHelper.JPG_EXTENSION;
-	}
-
-	public static String generateVoiceNameAtThisTime() {
-		Calendar cal = Calendar.getInstance();
-		return "Voice_" + DateFormat.format("ddMMyyyy_kkmmss", cal).toString()
-				+ VoiceHelper.VOICE_EXTENSION;
+		return DateFormat.format("yyyyMMdd_kkmmss", cal).toString() 
+				+"_gs"+ FaceHelper.JPG_EXTENSION;
 	}
 
 	public static String generateHEImageNameAtThisTime() {
 		Calendar cal = Calendar.getInstance();
-		return "_he_" + DateFormat.format("ddMMyyyy_kkmmss", cal).toString()
-				+ FaceHelper.PNG_EXTENSION;
+		return DateFormat.format("yyyyMMdd_kkmmss", cal).toString()
+				+"_he" + FaceHelper.PNG_EXTENSION;
 	}
 
 	public static String generateDesaturationImageNameAtThisTime() {
 		Calendar cal = Calendar.getInstance();
-		return "_disa_" + DateFormat.format("ddMMyyyy_kkmmss", cal).toString()
-				+ FaceHelper.PNG_EXTENSION;
-	}
-
-	public static String generateFinalFaceImageNameAtThisTime() {
-		Calendar cal = Calendar.getInstance();
-		return DateFormat.format("ddMMyyyy_kkmmss", cal).toString() + FaceHelper.JPG_EXTENSION;
+		return DateFormat.format("yyyyMMdd_kkmmss", cal).toString()
+				+"_disa"+ FaceHelper.PNG_EXTENSION;
 	}
 
 	public static String formatNumber2String(int num) {
@@ -298,6 +318,16 @@ public class AppUtil {
 			return "0" + num;
 		else
 			return "" + num;
+	}
+
+	public static String getHENameFromJPGName(String originalPath){
+		File f = new File(originalPath);
+        String name = f.getName().replace(FaceHelper.JPG_EXTENSION, "_he" + FaceHelper.JPG_EXTENSION);
+        return AppConst.FACE_FOLDER+"/"+name;
+	}
+	
+	public static String getPGMNameFromHEName(String originalPath){
+        return originalPath.replace(FaceHelper.JPG_EXTENSION, "_pgm" + FaceHelper.PGM_EXTENSION);
 	}
 
 }

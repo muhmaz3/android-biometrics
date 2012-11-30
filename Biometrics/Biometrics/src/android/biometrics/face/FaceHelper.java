@@ -19,8 +19,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-
-import android.biometrics.util.AppConst;
 import android.biometrics.util.AppUtil;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
@@ -28,6 +26,7 @@ import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.util.Log;
 
 import com.googlecode.javacv.cpp.opencv_core.CvSize;
@@ -43,6 +42,40 @@ public class FaceHelper {
 	public static final String PGM_EXTENSION = ".pgm";
 	public static final String JPG_EXTENSION = ".jpg";
 	public static final String PNG_EXTENSION = ".png";
+	
+	public static Bitmap processBitmap4Display(String path){
+    	try {
+			ExifInterface exif = new ExifInterface(path);
+			int rotate = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 
+					ExifInterface.ORIENTATION_NORMAL);
+			int degree = 0;
+			if(rotate == ExifInterface.ORIENTATION_ROTATE_90) degree = 90;
+			else if(rotate == ExifInterface.ORIENTATION_ROTATE_180) degree = 180;
+			else if(rotate == ExifInterface.ORIENTATION_ROTATE_270) degree = 270;
+			
+//			Log.e(TAG, "BM path:"+path);
+//			Log.e(TAG, "BM data:"+exif.getAttribute(ExifInterface.TAG_DATETIME));
+//			Log.e(TAG, "BM focal length:"+exif.getAttribute(ExifInterface.TAG_FOCAL_LENGTH));
+//			Log.e(TAG, "BM length:"+exif.getAttribute(ExifInterface.TAG_IMAGE_LENGTH));
+//			Log.e(TAG, "BM width:"+exif.getAttribute(ExifInterface.TAG_IMAGE_WIDTH));
+//			Log.e(TAG, "BM orientation:"+exif.getAttribute(ExifInterface.TAG_ORIENTATION));
+			//2 ExifInterface.ORIENTATION_FLIP_HORIZONTAL
+			//4 ExifInterface.ORIENTATION_FLIP_VERTICAL
+			//1 ExifInterface.ORIENTATION_NORMAL
+			//3 ExifInterface.ORIENTATION_ROTATE_180
+			//8 ExifInterface.ORIENTATION_ROTATE_270
+			//6 ExifInterface.ORIENTATION_ROTATE_90
+			//5 ExifInterface.ORIENTATION_TRANSPOSE
+			//7 ExifInterface.ORIENTATION_TRANSVERSE
+			//0 ExifInterface.ORIENTATION_UNDEFINED
+			
+			if(degree != 0) return FaceHelper.rotateBitmap(path, degree);
+			else return BitmapFactory.decodeFile(path);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    	return null;
+    }
 	
 	/****************************************
 	 * Histogram Equalization on face image *
@@ -194,18 +227,15 @@ public class FaceHelper {
      * Pre-processing Face Image for 1 image *
      *****************************************/
     
-    public static String preProcessFaceImage(String imgPath){
-    	BioFaceObject object = BioFaceDetector.getTargetFace(imgPath);
-		if(object != null){
-			Bitmap bm = BioFaceDetector.createResizedFaceBitmap(object, imgPath);
-//			saveBitmap(bm, AppConst.APP_FOLDER+"/"+System.currentTimeMillis()+"_1_resized.jpg");
-			
-			bm = convertRgbToGrayscaleBitmap(bm);
-//			saveBitmap(bm, AppConst.APP_FOLDER+"/"+System.currentTimeMillis()+"_2_toGrayscale.jpg");
-			
-			String jpgPath = createGrayscaleViaHistogramEqualization(bm, imgPath);
-			String pgmPath = convertGrayscaleToPgmImage(jpgPath, imgPath);
-			convertPgmToGrayscalePNG(pgmPath);
+    public static String preProcessFaceImage(String imgPath){ 	
+    	Bitmap targetFace = BioFaceDetector.getTargetFace(imgPath);
+		if(targetFace != null){
+			/* Resized RGB to GrayScale */
+			targetFace = convertRgbToGrayscaleBitmap(targetFace);
+			/* GrayScale to HQ-GrayScale */
+			String jpgPath = createGrayscaleViaHistogramEqualization(targetFace, imgPath);
+			/* HQ-GrayScale to PGM */
+			String pgmPath = convertGrayscaleToPgmImage(jpgPath);
 			
 			return pgmPath;
 		}else return null;
@@ -218,15 +248,13 @@ public class FaceHelper {
     	
         Bitmap equalized = histogramEqualization(source);
         
-        File f = new File(path);
-        String ending = path.substring(path.lastIndexOf("."));
-        String name = f.getName().replace(ending, "_he" + ending);
-        String outputName = AppConst.FACE_FOLDER+"/"+name;
+        String outputName = AppUtil.getHENameFromJPGName(path);
         try{
-        	f = new File(outputName);
+        	File f = new File(outputName);
             f.createNewFile();
             FileOutputStream fos = new FileOutputStream(f);
             equalized.compress(CompressFormat.JPEG, 100, fos);
+            fos.close();
         }catch(IOException e){
         	e.printStackTrace();
         	return null;
@@ -314,6 +342,7 @@ public class FaceHelper {
     }
         
     public static Bitmap convertRgbToGrayscaleBitmap(Bitmap src) {
+    	Log.e("HistogramEQ", ".convertRgbToGrayscaleBitmap...");
 	    final double GS_RED = 0.299;
 	    final double GS_GREEN = 0.587;
 	    final double GS_BLUE = 0.114;
@@ -340,30 +369,15 @@ public class FaceHelper {
 	}
 
     /**
-     * Create a PNG image from PGM image, save in the same folder
-     * The name of PGM image has a tail.
-     * Ex:/mnt/sdcard/a.pgm -> /mnt/sdcard/a_pgm2gs.png 
-     * @param path Path of pgm image
-     * @return Path of png image
-     */
-    public static String convertPgmToGrayscalePNG(String path){
-		IplImage originalImg = cvLoadImage(path, CV_LOAD_IMAGE_GRAYSCALE);
-		String imgName = path.replace(".pgm", "_pgm2gs.png");
-		
-		cvSaveImage(imgName, originalImg);
-		return imgName;
-	}
-    
-    /**
      * Create a PGM image from Grayscale image
      * Ex: /mnt/sdcard/biometrics/a.jpg -> /mnt/sdcard/biometrics/face/a.pgm
      * @param imgSource Path of grayscale image
      * @param originalPath Path of original image file (captured from camera)
      * @return Path of pgm image
      */
-	public static String convertGrayscaleToPgmImage(String imgSource, String originalPath){
+	public static String convertGrayscaleToPgmImage(String hePath){
 		Log.e(AppUtil.class.getName(), ".convertGrayscaleToPgmImage...");
-		IplImage src = cvLoadImage(imgSource);
+		IplImage src = cvLoadImage(hePath);
 		
 		IplImage grayscale = cvCreateImage(new CvSize(src.width(), src.height()), IPL_DEPTH_8U, 1);
 		cvCvtColor(src, grayscale, CV_RGB2GRAY);
@@ -371,11 +385,8 @@ public class FaceHelper {
 		//@link http://stackoverflow.com/questions/1585535/convert-rgb-to-black-white-in-opencv
 		IplImage im_bw = cvCreateImage(cvGetSize(grayscale), IPL_DEPTH_8U,1);
 		cvThreshold(grayscale, im_bw, 128, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
-		
-		File f = new File(originalPath);
-        String ending = originalPath.substring(originalPath.lastIndexOf("."));
-        String name = f.getName().replace(ending, ".pgm");
-		String destPath = AppConst.FACE_FOLDER + "/" + name;
+
+		String destPath = AppUtil.getPGMNameFromHEName(hePath);
 		
 		int res = cvSaveImage(destPath, grayscale);
 		
@@ -441,7 +452,21 @@ public class FaceHelper {
     	}
     }
 
-
+    /**
+     * Create a PNG image from PGM image, save in the same folder
+     * The name of PGM image has a tail.
+     * Ex:/mnt/sdcard/a.pgm -> /mnt/sdcard/a_pgm2gs.png 
+     * @param path Path of pgm image
+     * @return Path of png image
+     */
+    public static String convertPgmToGrayscalePNG(String path){
+		IplImage originalImg = cvLoadImage(path, CV_LOAD_IMAGE_GRAYSCALE);
+		String imgName = path.replace(".pgm", "_pgm2gs.png");
+		
+		cvSaveImage(imgName, originalImg);
+		return imgName;
+	}
+    
     private static int findMin(int[] pixel) {
         int min = pixel[0];
         for(int i=0; i<pixel.length; i++) {
