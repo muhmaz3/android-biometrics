@@ -113,7 +113,7 @@ public class FaceRecognizer {
 			
 			TextView tv = (TextView)mBase.findViewById(R.id.tvStatus);
 			DecimalFormat df = new DecimalFormat("#.####");
-			tv.setText(mBase.getString(R.string.recognize_face_confidence, df.format(resultConfidence)));
+			tv.setText(mBase.getString(R.string.recognize_face_confidence, ""+df.format(resultConfidence)));
 			
 			Toast toast = Toast.makeText(mBase, null, Toast.LENGTH_LONG);
 			LayoutInflater inflater = LayoutInflater.from(mBase);

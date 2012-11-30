@@ -3,10 +3,10 @@
     android:layout_width="match_parent"
     android:layout_height="?android:attr/listPreferredItemHeight" 
     android:gravity="center"
-    android:background="#eeeeee"
+    android:background="#eeffffff"
     android:padding="4dp">
 	<ImageView android:layout_width="48dp" android:layout_height="48dp"
-	    android:src="@drawable/ic_voice_item"/>
+	    android:src="@drawable/ic_audio"/>
     <TextView
         android:id="@+id/txt_lv_path"
         android:layout_width="0dp"

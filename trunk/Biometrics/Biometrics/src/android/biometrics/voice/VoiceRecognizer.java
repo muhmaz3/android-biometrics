@@ -90,7 +90,8 @@ public class VoiceRecognizer {
 		private int getDistanceThreshold(){
 			SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
 			return Integer.parseInt(pref.getString(
-					context.getString(R.string.pref_voice_distance_threshold_key), String.valueOf(AppConst.THRESHOLD_VOICE)));
+					context.getString(R.string.pref_voice_distance_threshold_key), 
+					String.valueOf(AppConst.DEFAULT_VOICE_THRESHOLD)));
 		}
 	}
 }

@@ -21,7 +21,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -81,7 +80,7 @@ public class ScreenFaceTraining extends Activity {
 					long id) {
 				String src = (String)adapter.getItemAtPosition(pos);
 	    		Bitmap bm;
-	    		bm = processBitmap4Display(src);
+	    		bm = FaceHelper.processBitmap4Display(src);
 				if(bm != null){
 	    			mIvFace.setImageBitmap(bm);
 	    			bm = null;
@@ -93,7 +92,7 @@ public class ScreenFaceTraining extends Activity {
 		View emptyView = getLayoutInflater().inflate(R.layout.view_face_empty, null);
 		ViewGroup parent = (ViewGroup)mGallery.getParent();
 		parent.addView(emptyView, new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
-		mGallery.setEmptyView(emptyView);
+//		mGallery.setEmptyView(emptyView);
 		
 		fetchLocalFaceImages();
     	mAdapter = new GalleryApdapter(this);
@@ -115,55 +114,16 @@ public class ScreenFaceTraining extends Activity {
     
     protected void onResume() {
     	super.onResume();
-//    	Log.e(TAG, "onResume");
-//    	
-//    	if(extraImagePath != null){
-//    		Bitmap bm = processBitmap4Display(extraImagePath);
-//    		if(bm != null){
-////    			AppUtil.loadBitmapFromPath(extraImagePath, mIvFace, 320, 240);
-//    			mIvFace.setImageBitmap(bm);
-//    			bm = null;
-//    		}
-//    		
-//    		mCapturedFaceImages.add(extraImagePath);
-//    		mAdapter.notifyDataSetChanged();
-//    	}
+    	Log.e(TAG, "onResume");
+    	if(mCapturedFaceImages != null && mCapturedFaceImages.size() >= 1){
+    		Bitmap bm = BitmapFactory.decodeFile(mCapturedFaceImages.get(mCapturedFaceImages.size()-1));
+    		mIvFace.setImageBitmap(bm);
+    		bm = null;
+    	}
+    	
+    	mAdapter.notifyDataSetChanged();
     };
-    
-    private Bitmap processBitmap4Display(String path){
-    	try {
-			ExifInterface exif = new ExifInterface(path);
-			int rotate = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 
-					ExifInterface.ORIENTATION_NORMAL);
-			int degree = 0;
-			if(rotate == ExifInterface.ORIENTATION_ROTATE_90) degree = 90;
-			else if(rotate == ExifInterface.ORIENTATION_ROTATE_180) degree = 180;
-			else if(rotate == ExifInterface.ORIENTATION_ROTATE_270) degree = 270;
-			
-//			Log.e(TAG, "BM path:"+path);
-//			Log.e(TAG, "BM data:"+exif.getAttribute(ExifInterface.TAG_DATETIME));
-//			Log.e(TAG, "BM focal length:"+exif.getAttribute(ExifInterface.TAG_FOCAL_LENGTH));
-//			Log.e(TAG, "BM length:"+exif.getAttribute(ExifInterface.TAG_IMAGE_LENGTH));
-//			Log.e(TAG, "BM width:"+exif.getAttribute(ExifInterface.TAG_IMAGE_WIDTH));
-//			Log.e(TAG, "BM orientation:"+exif.getAttribute(ExifInterface.TAG_ORIENTATION));
-			//2 ExifInterface.ORIENTATION_FLIP_HORIZONTAL
-			//4 ExifInterface.ORIENTATION_FLIP_VERTICAL
-			//1 ExifInterface.ORIENTATION_NORMAL
-			//3 ExifInterface.ORIENTATION_ROTATE_180
-			//8 ExifInterface.ORIENTATION_ROTATE_270
-			//6 ExifInterface.ORIENTATION_ROTATE_90
-			//5 ExifInterface.ORIENTATION_TRANSPOSE
-			//7 ExifInterface.ORIENTATION_TRANSVERSE
-			//0 ExifInterface.ORIENTATION_UNDEFINED
-			
-			if(degree != 0) return FaceHelper.rotateBitmap(path, degree);
-			else return BitmapFactory.decodeFile(path);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-    	return null;
-    }
-    
+     
     View.OnClickListener OnClickButtonHandler = new View.OnClickListener() {
 		
 		@Override
@@ -212,6 +172,8 @@ public class ScreenFaceTraining extends Activity {
 			AppUtil.clearTrainingSampleFromSdcard(true);
 			AppUtil.savePreference(this, AppConst.KEY_FACE_TRAINED, false);
 			
+			mIvFace.setImageResource(R.drawable.ic_face_smile);
+			
 			mCapturedFaceImages.clear();
 			mAdapter.notifyDataSetChanged();
 			break;
@@ -231,7 +193,7 @@ public class ScreenFaceTraining extends Activity {
 		
 		if(requestCode == REQ_CAMERA_CAPTURE && resultCode == RESULT_OK){
 			if(extraImagePath != null){
-	    		Bitmap bm = processBitmap4Display(extraImagePath);
+	    		Bitmap bm = FaceHelper.processBitmap4Display(extraImagePath);
 	    		if(bm != null){
 	    			mIvFace.setImageBitmap(bm);
 	    			bm = null;
@@ -273,7 +235,6 @@ public class ScreenFaceTraining extends Activity {
 			}
 
 			String src = getItem(pos);
-//			Bitmap bm = processBitmap4Display(src);
 			Bitmap bm = BitmapFactory.decodeFile(src);
 			bm = Bitmap.createScaledBitmap(bm, 64, 64, false);
 			if(bm != null){
@@ -314,6 +275,7 @@ public class ScreenFaceTraining extends Activity {
 		intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(imageFile));
 		extraImagePath = imageFile.getAbsolutePath();
 		
+		Log.e(TAG, "callCameraImageCapturer->"+extraImagePath);
 		startActivityForResult(intent, REQ_CAMERA_CAPTURE);
 	}
 	
@@ -401,11 +363,6 @@ public class ScreenFaceTraining extends Activity {
 				}catch(IOException e){
 					e.printStackTrace();
 				}
-				
-				/**
-				 * Testing, do with 1 folder
-				 */
-//				break;
 			}
 			return null;
 		}

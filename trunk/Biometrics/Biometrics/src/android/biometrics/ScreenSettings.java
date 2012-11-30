@@ -9,4 +9,11 @@ public class ScreenSettings extends PreferenceActivity {
 		super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.xml.screen_preference);
 	};
+	
+	@Override
+	public void onBackPressed() {
+		Biometrics.isFirstTime = false;
+		setResult(RESULT_OK);
+		super.onBackPressed();
+	}
 }

@@ -59,7 +59,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/bg_action_icon"
-            android:src="@drawable/ic_voice_mode_training" />
+            android:src="@drawable/ic_voice_mode_training" 
+            android:visibility="gone"/>
     </LinearLayout>
 
 </LinearLayout>

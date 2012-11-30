@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- FACE -->
+    <string-array name="pref_single_or_multiple_objects">
+        <item >Just one for this device</item>
+        <item >Multiple objects with username</item>
+    </string-array>
+    
+    <string-array name="pref_single_or_multiple_entry_values">
+        <item >1</item>
+        <item >2</item>
+    </string-array>
+    
     <string-array name="pref_confidence_threshold">
         <item >0.5</item>
         <item >0.55</item>
@@ -14,21 +23,29 @@
         <item >0.95</item>
     </string-array>
     
-    <string-array name="pref_single_or_multiple_objects">
-        <item >Just one for this device</item>
-        <item >Multiple objects with usernames</item>
-    </string-array>
-    
-    <string-array name="pref_single_or_multiple_entry_values">
-        <item >1</item>
-        <item >2</item>
-    </string-array>
-    
-    <!-- VOICE -->
     <string-array name="pref_voice_distance_threshold">
         <item >400</item>
+        <item >450</item>
         <item >500</item>
+        <item >550</item>
         <item >600</item>
+        <item >650</item>
         <item >700</item>
+        <item >750</item>
+    </string-array>
+    
+    <string-array name="pref_recognition_mode_entries">
+        <item >Just Face</item>
+        <item >Just Voice</item>
+        <item >Face first, then Voice</item>
+        <item >Voice first, then Face</item>
+        <item >Both Face and Voice</item>
+    </string-array>
+    <string-array name="pref_recognition_mode_entry_values">
+        <item >0</item>
+        <item >1</item>
+        <item >2</item>
+        <item >3</item>
+        <item >4</item>
     </string-array>
 </resources>
