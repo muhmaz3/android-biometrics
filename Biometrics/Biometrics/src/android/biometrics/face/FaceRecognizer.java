@@ -131,21 +131,18 @@ public class FaceRecognizer {
 				view.setBackgroundColor(Color.rgb(221, 0, 0));
 				tv.setText(mBase.getString(R.string.toast_can_not_detect_face));
 			}else
-				/*if (!result) {
-					view.setBackgroundColor(Color.rgb(221, 0, 0));
-					tv.setText(mBase.getString(R.string.recognize_failed));
-				}else*/
 			{
 				int mode = AppUtil.getRecognitionMode(mBase.getApplicationContext());	
 				switch (mode) {
 				case AppConst.RECOGNITION_MODE_BOTH:
-					//TODO continue code in here
+					AppUtil.savePreference(mBase.getApplicationContext(),AppConst.CONFIDENT_FACE_CALCULATED, confidenceCalculated);
+					Intent intent = new Intent(mBase, ScreenVoiceRecognizing.class);
+					mBase.startActivity(intent);
 					break;
 				case AppConst.RECOGNITION_MODE_FACE_FIRST:	
 					if(confidenceCalculated >= ScreenFaceRecognizing.threshold){
-						AppUtil.savePreference(mBase.getApplicationContext(),AppConst.CONFIDENT_FACE_CALCULATED, confidenceCalculated);
-						Intent intent = new Intent(mBase, ScreenVoiceRecognizing.class);
-						mBase.startActivity(intent);
+						Intent intent2 = new Intent(mBase, ScreenVoiceRecognizing.class);
+						mBase.startActivity(intent2);
 					}else{
 						view.setBackgroundColor(Color.rgb(221, 0, 0));
 						tv.setText(mBase.getString(R.string.recognize_failed));
@@ -208,7 +205,7 @@ public class FaceRecognizer {
 			printLog("Confidence = " + confidenceCalculated);
 			printLog("Confidence threshold = " + ScreenFaceRecognizing.threshold);
 
-//			return confidenceCalculated >= ScreenFaceRecognizing.threshold;
+
 			return true;
 		}
 
