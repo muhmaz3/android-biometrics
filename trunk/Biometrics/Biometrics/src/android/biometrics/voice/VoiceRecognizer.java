@@ -80,7 +80,7 @@ public class VoiceRecognizer {
 			switch (mode) {
 			case AppConst.RECOGNITION_MODE_BOTH:
 				float thresholdOfFace = AppUtil.getPreference(context.getApplicationContext(), AppConst.CONFIDENT_FACE_CALCULATED);
-				// TODO
+				// TODO continue code to combine 2 threshold for recognize
 				break;
 			
 			case AppConst.RECOGNITION_MODE_FACE_FIRST:				
