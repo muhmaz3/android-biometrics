@@ -11,9 +11,11 @@
     <string name="txt_loading">Loading...</string>
     <string name="txt_saving">Saving...</string>
     <string name="txt_recognizing">Recognizing...</string>
-    
+    <string name="recording_fail">Recording fail, Please record again!</string>
+    <string name="capture_fail">Capture image fail, Please record again!</string>
     <string name="train_failed">Problem when training, please train again</string>
-    <string name="not_train_yet">Train your data before starting recognizing!!!</string>
+    <string name="train_finish">Training success!</string>
+    <string name="not_train_yet">Train your data before start recognizing!!!</string>
     
     <!-- FACE -->
     <string name="toast_not_enough_faces">Capture %1$d faces at least and continue</string>
@@ -26,6 +28,7 @@
     <string name="toast_not_enough_voices">Record %1$d voices at least and continue</string>
     <string name="toast_please_record_your_voice">Please record your face first</string>
     <string name="clear_all_voices">Clear all voices</string>
+    <string name="txt_load_voice_train_fail">Load file training fail, please try again!</string>
     
     <!-- Settings -->
     <string name="pref_single_or_multiple">Recognition type</string>
@@ -47,4 +50,14 @@
     <string name="pref_voice_distance_threshold_summary">Threshold for voice recognition criteria, suggestion is 600</string>
     <string name="pref_voice_distance_threshold_key">voice_distance</string>
     <string name="pref_voice_distance_threshold_dialog_title">Choose distance</string>
+    <!-- Setting -->
+    <string name = "pref_setting_combine">Recognition type</string>
+    <string name = "pref_setting_combine_summary">The type that this app use method to recognize</string>
+    <string name = "pref_setting_combine_key">combine_setting</string>
+    <string name = "pref_setting_combine_dialog_title">Choose method combine</string>
+    <string name = "setting_just_face_key">Just Face</string>
+    <string name = "setting_just_voice_key">Just Voice</string>
+    <string name = "setting_voice_first_key">Voice First</string>
+    <string name = "setting_face_first_key">Face First</string>
+    <string name = "setting_both_key">Both</string>
 </resources>

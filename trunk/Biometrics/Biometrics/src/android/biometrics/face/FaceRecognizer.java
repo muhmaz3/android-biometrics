@@ -13,15 +13,19 @@ import static com.googlecode.javacv.cpp.opencv_highgui.cvLoadImage;
 import static com.googlecode.javacv.cpp.opencv_legacy.cvEigenDecomposite;
 
 import java.io.File;
-import java.text.DecimalFormat;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.biometrics.R;
 import android.biometrics.ScreenFaceRecognizing;
+import android.biometrics.ScreenVoiceRecognizing;
 import android.biometrics.util.AppConst;
+import android.biometrics.util.AppUtil;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -61,13 +65,17 @@ public class FaceRecognizer {
 	/** the projected training faces */
 	CvMat projectedTrainFaceMat;
 	
+	SharedPreferences pref;
+	String mode;
 	enum Distance{
 		Euclidian, Mahalanobis
 	}
 	private Activity mBase;
-
+	
 	public FaceRecognizer(Activity base) {
 		mBase = base;
+		pref = PreferenceManager.getDefaultSharedPreferences(mBase);
+		mode = pref.getString(mBase.getString(R.string.pref_setting_combine_key), mBase.getString(R.string.setting_both_key));
 	}
 
 	public void recognize(String imagePath) {
@@ -79,7 +87,7 @@ public class FaceRecognizer {
 		private ProgressDialog dialog;
 		private String faceObjectPath;
 		private String srcImagePath;
-		private float resultConfidence;
+		private float confidenceCalculated;
 
 		@Override
 		protected void onPreExecute() {
@@ -112,8 +120,8 @@ public class FaceRecognizer {
 			dialog.dismiss();
 			
 			TextView tv = (TextView)mBase.findViewById(R.id.tvStatus);
-			DecimalFormat df = new DecimalFormat("#.####");
-			tv.setText(mBase.getString(R.string.recognize_face_confidence, ""+df.format(resultConfidence)));
+//			DecimalFormat df = new DecimalFormat("#.####");
+//			tv.setText(mBase.getString(R.string.recognize_face_confidence, ""+df.format(confidenceCalculated)));
 			
 			Toast toast = Toast.makeText(mBase, null, Toast.LENGTH_LONG);
 			LayoutInflater inflater = LayoutInflater.from(mBase);
@@ -122,16 +130,48 @@ public class FaceRecognizer {
 			if(result == null){
 				view.setBackgroundColor(Color.rgb(221, 0, 0));
 				tv.setText(mBase.getString(R.string.toast_can_not_detect_face));
-			}else if(result){
-				view.setBackgroundColor(Color.rgb(0, 221, 119));
-				tv.setText(mBase.getString(R.string.recognize_success));
-			}else{
-				view.setBackgroundColor(Color.rgb(221, 0, 0));
-				tv.setText(mBase.getString(R.string.recognize_failed));
+			}else
+				/*if (!result) {
+					view.setBackgroundColor(Color.rgb(221, 0, 0));
+					tv.setText(mBase.getString(R.string.recognize_failed));
+				}else*/
+			{
+				int mode = AppUtil.getRecognitionMode(mBase.getApplicationContext());	
+				switch (mode) {
+				case AppConst.RECOGNITION_MODE_BOTH:
+					//TODO continue code in here
+					break;
+				case AppConst.RECOGNITION_MODE_FACE_FIRST:	
+					if(confidenceCalculated >= ScreenFaceRecognizing.threshold){
+						AppUtil.savePreference(mBase.getApplicationContext(),AppConst.CONFIDENT_FACE_CALCULATED, confidenceCalculated);
+						Intent intent = new Intent(mBase, ScreenVoiceRecognizing.class);
+						mBase.startActivity(intent);
+					}else{
+						view.setBackgroundColor(Color.rgb(221, 0, 0));
+						tv.setText(mBase.getString(R.string.recognize_failed));
+					}
+					
+					break;
+				case AppConst.RECOGNITION_MODE_JUST_FACE:
+				case AppConst.RECOGNITION_MODE_VOICE_FIRST:
+					if(confidenceCalculated >= ScreenFaceRecognizing.threshold){
+						view.setBackgroundColor(Color.rgb(0, 221, 119));
+						tv.setText(mBase.getString(R.string.recognize_success));
+					}else{
+						view.setBackgroundColor(Color.rgb(221, 0, 0));
+						tv.setText(mBase.getString(R.string.recognize_failed));
+					}			
+					 
+					break;
+				default:
+					break;
+				}
+				toast.setView(view);
+				toast.show();
+				mBase.finish();
 			}
 			
-			toast.setView(view);
-			toast.show();
+			
 			
 			/**
 			 * Delete all face, because we do not need anymore
@@ -162,13 +202,14 @@ public class FaceRecognizer {
 			int iNearest = findNearestNeighbor(projectedTestFace, 
 					new FloatPointer(pConfidence), Distance.Mahalanobis);
 
-			resultConfidence = pConfidence.get();
+			confidenceCalculated = pConfidence.get();
 //			int nearest = trainPersonNumMat.data_i().get(iNearest);
 
-			printLog("Confidence = " + resultConfidence);
+			printLog("Confidence = " + confidenceCalculated);
 			printLog("Confidence threshold = " + ScreenFaceRecognizing.threshold);
 
-			return resultConfidence >= ScreenFaceRecognizing.threshold;
+//			return confidenceCalculated >= ScreenFaceRecognizing.threshold;
+			return true;
 		}
 
 		/**

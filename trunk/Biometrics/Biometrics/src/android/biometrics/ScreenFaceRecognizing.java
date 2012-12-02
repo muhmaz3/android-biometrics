@@ -9,8 +9,10 @@ import android.biometrics.face.FaceRecognizer;
 import android.biometrics.util.AppConst;
 import android.biometrics.util.AppUtil;
 import android.content.Intent;
+
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -25,21 +27,20 @@ import android.widget.Toast;
 
 public class ScreenFaceRecognizing extends Activity {
 //	private static final String TAG = ScreenFaceRecognizing.class.getCanonicalName();
-	private static final int REQ_CAMERA_CAPTURE = 7;
-    private String extraImagePath;
-	private Spinner mThresholdSpn;
+	private String extraImagePath;
 	private ImageView mIvFace;
 	public static float threshold;  
 	public static boolean result = false;
 	private static String lastDirectory = Environment.getExternalStorageDirectory().getAbsolutePath();
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.screen_face_recognizing);
 		
-		mThresholdSpn = (Spinner) findViewById(R.id.spinner_threshold);
-		mThresholdSpn.setVisibility(View.GONE);
+		
+//		mThresholdSpn = (Spinner) findViewById(R.id.spinner_threshold);
+//		mThresholdSpn.setVisibility(View.GONE);
 		mIvFace = (ImageView) findViewById(R.id.ivFace);
 		
 		ImageView bt;
@@ -73,7 +74,6 @@ public class ScreenFaceRecognizing extends Activity {
 	
 	View.OnClickListener ClickButtonHandler = new View.OnClickListener() {
 		
-		@Override
 		public void onClick(View v) {
 			switch (v.getId()) {
 			case R.id.btnCapture:
@@ -87,18 +87,19 @@ public class ScreenFaceRecognizing extends Activity {
 				callCameraImageCapturer();
 				break;
 			case R.id.btnRecognize:
-				if(! AppUtil.isTrained(ScreenFaceRecognizing.this, AppConst.KEY_FACE_TRAINED)){
-					Toast.makeText(ScreenFaceRecognizing.this, 
-							getString(R.string.not_train_yet), 
-							Toast.LENGTH_LONG).show();
-					return;
-				}
-				if(extraImagePath == null){
-					Toast.makeText(ScreenFaceRecognizing.this, 
-							getString(R.string.toast_please_capture_your_face), 
-							Toast.LENGTH_LONG).show();
-					return;
-				}
+				//TODO modified here to recognize
+//				if(! AppUtil.isTrained(ScreenFaceRecognizing.this, AppConst.KEY_FACE_TRAINED)){
+//					Toast.makeText(ScreenFaceRecognizing.this, 
+//							getString(R.string.not_train_yet), 
+//							Toast.LENGTH_LONG).show();
+//					return;
+//				}
+//				if(extraImagePath == null){
+//					Toast.makeText(ScreenFaceRecognizing.this, 
+//							getString(R.string.toast_please_capture_your_face), 
+//							Toast.LENGTH_LONG).show();
+//					return;
+//				}
 				
 				recognize();
 				break;
@@ -120,7 +121,7 @@ public class ScreenFaceRecognizing extends Activity {
 		case Menu.FIRST:
 			intent = new Intent(Intent.ACTION_GET_CONTENT);
 			intent.setDataAndType(Uri.parse(lastDirectory), "*/*");
-			startActivityForResult(intent, 77);
+			startActivityForResult(intent, AppConst.REQ_CAMERA_CAPTURE);
 			break;
 		case Menu.FIRST + 1:
 			intent = new Intent(ScreenFaceRecognizing.this, ScreenFaceGrayscaleDisplay.class);
@@ -139,14 +140,18 @@ public class ScreenFaceRecognizing extends Activity {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
-		if(requestCode == REQ_CAMERA_CAPTURE && resultCode == RESULT_OK){
+
+		if(requestCode == AppConst.REQ_CAMERA_CAPTURE && resultCode == RESULT_OK){
 			lastDirectory = (new File(extraImagePath)).getParent();
 			Bitmap bm = FaceHelper.processBitmap4Display(extraImagePath);
 			mIvFace.setImageBitmap(bm);
 			bm = null;
+
 		}else{
 			extraImagePath = null;
+			Toast.makeText(this, getString(R.string.capture_fail), Toast.LENGTH_SHORT).show();
 		}
+
 	}
 	
 	private void callCameraImageCapturer() {
@@ -156,11 +161,17 @@ public class ScreenFaceRecognizing extends Activity {
 		intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(imageFile));
 		extraImagePath = imageFile.getAbsolutePath();
 
-		startActivityForResult(intent, REQ_CAMERA_CAPTURE);
+		startActivityForResult(intent, AppConst.REQ_CAMERA_CAPTURE);
 	}
 
 	private void recognize(){
+
+//		int pos = mThresholdSpn.getSelectedItemPosition();
+//		String[] thresholds = getResources().getStringArray(R.array.pref_confidence_threshold);
+//		threshold = Float.parseFloat(thresholds[pos]);
+
 		threshold = getConfidenceThreshold();
+
 		
 		FaceRecognizer recog = new FaceRecognizer(ScreenFaceRecognizing.this);
 		recog.recognize(extraImagePath);

@@ -34,12 +34,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.app.Activity;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.biometrics.R;
 import android.biometrics.ScreenFaceTraining;
 import android.biometrics.ScreenVoiceTraining;
 import android.biometrics.util.AppConst;
 import android.biometrics.util.AppUtil;
+import android.content.Intent;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -75,6 +77,7 @@ public class FaceTrainer {
 	
 	private Activity mBase;
 	
+
 	public FaceTrainer(Activity context){
 		mBase = context;
 	}
@@ -124,15 +127,18 @@ public class FaceTrainer {
 		}
 		
 		@Override
-		protected Boolean doInBackground(String... arg0) {			
-			images = processOriginalImages(images);
+		protected Boolean doInBackground(String... arg0) {	
+			//TODO remove block comment to run 
+/*			images = processOriginalImages(images);
 			if(images == null || images.size() == 0){
 				printLog("Problem when extracting face from images.");
 				return false;
 			}
 			
 			return learn();
-		}
+			
+*/			return true;
+			}
 		
 		@Override
 		protected void onProgressUpdate(Integer... values) {
@@ -151,17 +157,11 @@ public class FaceTrainer {
 						Toast.LENGTH_LONG).show();
 			}else{
 				AppUtil.savePreference(mBase, AppConst.KEY_FACE_TRAINED, true);
+				Intent intent;
+				intent = new Intent(mBase, ScreenVoiceTraining.class);
+				mBase.startActivityForResult(intent, AppConst.REQ_TRAIN_VOICE);
 			}
-			
-			int recogMode = AppUtil.getRecognitionMode(mBase);
-			switch (recogMode) {
-			case AppConst.RECOGNITION_MODE_FACE_FIRST:
-			case AppConst.RECOGNITION_MODE_BOTH:
-				Intent intent = new Intent(mBase, ScreenVoiceTraining.class);
-				mBase.startActivity(intent);
-				break;
-			}
-			
+
 			mBase.finish();
 		}
 
@@ -169,7 +169,7 @@ public class FaceTrainer {
 			trainingFaceImgArr = loadFaceImgArray(images, true);
 			nTrainFaces = trainingFaceImgArr.length;
 
-			if (nTrainFaces < ScreenFaceTraining.MIN_FACE_IMAGE_CAPTURED) {
+			if (nTrainFaces < AppConst.MIN_FACE_IMAGE_CAPTURED) {
 				return false;
 			}
 

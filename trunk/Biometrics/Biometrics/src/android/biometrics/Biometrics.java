@@ -5,9 +5,9 @@ import android.biometrics.util.AppUtil;
 import android.util.Log;
 
 public class Biometrics extends Application {
-	public static boolean isFirstTime = true;
+//	public static boolean isFirstTime = true;
 	
-	@Override
+	@Override 
 	public void onCreate() {
 		super.onCreate();
 		AppUtil.createAppDirectory();

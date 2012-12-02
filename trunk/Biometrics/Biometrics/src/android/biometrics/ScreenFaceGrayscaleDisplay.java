@@ -44,7 +44,6 @@ public class ScreenFaceGrayscaleDisplay extends Activity {
 		
 		gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
-			@Override
 			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
 					long arg3) {
 				String s = (String) arg0.getAdapter().getItem(arg2);
@@ -58,7 +57,6 @@ public class ScreenFaceGrayscaleDisplay extends Activity {
 		File f = new File(AppConst.FACE_FOLDER);
 		return f.listFiles(new FilenameFilter() {
 			
-			@Override
 			public boolean accept(File dir, String filename) {
 				return filename.toLowerCase().endsWith(".pgm") ? true : false;
 			}
@@ -99,22 +97,18 @@ public class ScreenFaceGrayscaleDisplay extends Activity {
 			mInflater = LayoutInflater.from(context);
 		}
 		
-		@Override
 		public int getCount() {
 			return images.length;
 		}
 
-		@Override
 		public String getItem(int arg0) {
 			return images[arg0];
 		}
 
-		@Override
 		public long getItemId(int arg0) {
 			return arg0;
 		}
 
-		@Override
 		public View getView(int pos, View convertView, ViewGroup parent) {
 			if(convertView == null){
 				convertView = mInflater.inflate(R.layout.view_item_grayscale, null);
