@@ -16,6 +16,7 @@ import android.biometrics.ScreenFaceTraining;
 import android.biometrics.util.AppConst;
 import android.biometrics.util.AppUtil;
 import android.content.Intent;
+
 import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.Toast;
@@ -27,8 +28,10 @@ public class VoiceTrainer {
 	private Activity mBase;
 	private AudioFeatureExtractor featureExtractor = new TimbreDistributionExtractor();
 
+
 	public VoiceTrainer(Activity context) {
-		mBase = context;
+		this.mBase = context;
+
 	}
 
 	public void train(List<String> fileNamePath) {
@@ -102,22 +105,27 @@ public class VoiceTrainer {
 		protected void onPostExecute(Boolean result) {
 			super.onPostExecute(result);
 			dialog.dismiss();
+
 			if(!result){
 				Toast.makeText(mBase, mBase.getString(R.string.train_failed), 
 						Toast.LENGTH_LONG).show();
 			}else{
 				AppUtil.savePreference(mBase, AppConst.KEY_VOICE_TRAINED, true);
+				Toast.makeText(mBase, mBase.getString(R.string.train_finish), 
+						Toast.LENGTH_LONG).show();
+				mBase.finish();
 			}
 			
-			int recogMode = AppUtil.getRecognitionMode(mBase);
-			switch (recogMode) {
-			case AppConst.RECOGNITION_MODE_VOICE_FIRST:
-				Intent intent = new Intent(mBase, ScreenFaceTraining.class);
-				mBase.startActivity(intent);
-				break;
-			}
+//			int recogMode = AppUtil.getRecognitionMode(mBase);
+//			switch (recogMode) {
+//			case AppConst.RECOGNITION_MODE_VOICE_FIRST:
+//				Intent intent = new Intent(mBase, ScreenFaceTraining.class);
+//				mBase.startActivity(intent);
+//				break;
+//			}
 			
-			mBase.finish();
+			
+
 		}
 	}
 }

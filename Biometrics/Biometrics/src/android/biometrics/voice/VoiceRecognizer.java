@@ -9,11 +9,12 @@ import lib.comirva.audio.PointList;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.biometrics.R;
+import android.biometrics.ScreenVoiceRecognizing;
 import android.biometrics.util.AppConst;
-import android.content.SharedPreferences;
+import android.biometrics.util.AppUtil;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.AsyncTask;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,9 +25,12 @@ public class VoiceRecognizer {
 	private static final String TAG = VoiceRecognizer.class.getCanonicalName();
 	private Activity context;
 	private ArrayList<PointList> trainingSet;
+
+	float resultConfident;
 	
 	public VoiceRecognizer(Activity base){
 		this.context = base;
+
 	}
 	
 	public void setTrainingSet(ArrayList<PointList> trainingSet){
@@ -39,7 +43,6 @@ public class VoiceRecognizer {
 	
 	private class VoiceRegconizingTask extends AsyncTask<String, Integer, Boolean>{
 		private ProgressDialog dialog;
-		private int distanceThreshold;
 		
 		@Override
 		protected void onPreExecute() {
@@ -48,7 +51,6 @@ public class VoiceRecognizer {
 			dialog.setMessage(context.getString(R.string.txt_recognizing));
 			dialog.show();
 			
-			distanceThreshold = getDistanceThreshold();
 		}
 		
 		@Override
@@ -58,40 +60,57 @@ public class VoiceRecognizer {
 			AudioFeatureExtraction tdet1 = new AudioFeatureExtraction(
 					trainingSet,new TimbreDistributionExtractor(),  voiceInput);
 			
-			double distance = tdet1.run();
-			Log.e(TAG, "Distance result is "+ distance);
+			resultConfident = (float) tdet1.run();
+			Log.e(TAG, "Distance result is "+ resultConfident);
 			
-			if(distance < distanceThreshold) 
-				return true;
-			return false;
+			return true;
+			
 		}
 		
 		@Override
 		protected void onPostExecute(Boolean result) {
 			super.onPostExecute(result);
 			dialog.dismiss();
-
 			Toast toast = Toast.makeText(context, null, Toast.LENGTH_LONG);
 			LayoutInflater inflater = LayoutInflater.from(context);
 			View view = inflater.inflate(R.layout.view_toast_result, null);
 			TextView tv = (TextView)view.findViewById(R.id.text);
-			if(result){
-				view.setBackgroundColor(Color.rgb(0, 221, 119));
-				tv.setText(context.getString(R.string.recognize_success));
-			}else{
-				view.setBackgroundColor(Color.rgb(221, 0, 0));
-				tv.setText(context.getString(R.string.recognize_failed));
-			}
 			
+			int mode = AppUtil.getRecognitionMode(context.getApplicationContext());	
+			switch (mode) {
+			case AppConst.RECOGNITION_MODE_BOTH:
+				float thresholdOfFace = AppUtil.getPreference(context.getApplicationContext(), AppConst.CONFIDENT_FACE_CALCULATED);
+				// TODO
+				break;
+			
+			case AppConst.RECOGNITION_MODE_FACE_FIRST:				
+			case AppConst.RECOGNITION_MODE_JUST_VOICE:
+				if(resultConfident < ScreenVoiceRecognizing.threshold){
+					view.setBackgroundColor(Color.rgb(0, 221, 119));
+					tv.setText(context.getString(R.string.recognize_success));
+				}else{
+					view.setBackgroundColor(Color.rgb(221, 0, 0));
+					tv.setText(context.getString(R.string.recognize_failed));
+				}
+				break;
+			case AppConst.RECOGNITION_MODE_VOICE_FIRST:
+				if(resultConfident < ScreenVoiceRecognizing.threshold){
+					AppUtil.savePreference(context.getApplicationContext(),AppConst.CONFIDENT_FACE_CALCULATED, resultConfident);
+					Intent intent = new Intent(context, ScreenVoiceRecognizing.class);
+					context.startActivity(intent);
+				}else{
+					view.setBackgroundColor(Color.rgb(221, 0, 0));
+					tv.setText(context.getString(R.string.recognize_failed));
+				}				
+				break;
+			default:
+				break;
+			}
+
 			toast.setView(view);
 			toast.show();
+			context.finish();
 		}
 		
-		private int getDistanceThreshold(){
-			SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
-			return Integer.parseInt(pref.getString(
-					context.getString(R.string.pref_voice_distance_threshold_key), 
-					String.valueOf(AppConst.DEFAULT_VOICE_THRESHOLD)));
-		}
 	}
 }

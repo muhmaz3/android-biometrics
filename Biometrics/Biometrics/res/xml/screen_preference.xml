@@ -2,14 +2,14 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <PreferenceCategory android:title="General" >
-        <ListPreference
+      <!--  <ListPreference
             android:defaultValue="1"
             android:dialogTitle="@string/pref_single_or_multiple_dialog_title"
             android:entries="@array/pref_single_or_multiple_objects"
             android:entryValues="@array/pref_single_or_multiple_entry_values"
             android:key="@string/pref_single_or_multiple_key"
             android:summary="@string/pref_single_or_multiple_summary"
-            android:title="@string/pref_single_or_multiple" />
+            android:title="@string/pref_single_or_multiple" /> --> 
         <ListPreference
             android:defaultValue="0"
             android:dialogTitle="@string/pref_recognition_mode_dialog_title"
@@ -40,5 +40,4 @@
             android:summary="@string/pref_voice_distance_threshold_summary"
             android:title="@string/pref_voice_distance_threshold" />
     </PreferenceCategory>
-
 </PreferenceScreen>

@@ -36,6 +36,22 @@ public class AppUtil {
 		editor.putString(key, value);
 		editor.commit();
 	}
+	
+	public static void savePreference(Context context, String key, Float value){
+		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
+		SharedPreferences.Editor editor = pref.edit();
+		editor.putFloat(key, value);
+		editor.commit();
+	}
+	
+	public static float getPreference(Context context, String key){
+		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
+		if(key.equals(AppConst.CONFIDENT_FACE_CALCULATED)){
+			return pref.getFloat(key, AppConst.DEFAULT_FACE_THRESHOLD);
+		}else{
+			return pref.getFloat(key, AppConst.DEFAULT_VOICE_THRESHOLD);
+		}
+	}
 
 	public static int getRecognitionMode(Context context){
 		SharedPreferences pref = PreferenceManager
@@ -245,12 +261,12 @@ public class AppUtil {
 			filterAttribute = FaceHelper.JPG_EXTENSION;
 		} else {
 			filterAttribute = VoiceHelper.VOICE_EXTENSION;
+
 		}
 		clearTrainingData(FaceOrVoice);
 		
 		File[] files = f.listFiles(new FileFilter() {
 			
-			@Override
 			public boolean accept(File pathname) {
 				return pathname.getAbsolutePath().toLowerCase().endsWith(filterAttribute);
 			}
@@ -318,6 +334,16 @@ public class AppUtil {
 			return "0" + num;
 		else
 			return "" + num;
+	}
+	
+	public static boolean isTrainingSetAvailable(){
+		if(!isSDCardAvailable())
+			return false;
+		File faceTrained = new File(AppConst.FACE_DATA_FILE_PATH);
+		File voiceTrained = new File(AppConst.VOICE_DATA_FILE_PATH);
+		if(!faceTrained.exists() || !voiceTrained.exists())
+			return false;
+		return true;
 	}
 
 	public static String getHENameFromJPGName(String originalPath){

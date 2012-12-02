@@ -484,4 +484,32 @@ public class FaceHelper {
         }
         return max;
     }
+    public static Bitmap decodeBitmapResized(String imgPath, int requestWidth,
+			int requestHeight) {
+		BitmapFactory.Options options = new BitmapFactory.Options();
+		options.inJustDecodeBounds = true;
+		BitmapFactory.decodeFile(imgPath, options);
+
+		options.inSampleSize = getSampleSize(options, requestWidth,
+				requestHeight);
+		options.inJustDecodeBounds = false;
+		
+		return BitmapFactory.decodeFile(imgPath, options);
+	}
+
+	private static int getSampleSize(BitmapFactory.Options option,
+			int requestW, int requestH) {
+		final int height = option.outHeight;
+		final int width = option.outWidth;
+		int inSampleSize = 1;
+
+		if (height > requestH || width > requestW) {
+			if (width > height) {
+				inSampleSize = Math.round((float) height / (float) requestH);
+			} else {
+				inSampleSize = Math.round((float) width / (float) requestW);
+			}
+		}
+		return inSampleSize;
+	}
 }

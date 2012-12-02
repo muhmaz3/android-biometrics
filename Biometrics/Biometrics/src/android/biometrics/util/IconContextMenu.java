@@ -88,7 +88,6 @@ public class IconContextMenu implements DialogInterface.OnCancelListener,
 		final AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
         builder.setTitle(menuItitle);
         builder.setAdapter(menuAdapter, new DialogInterface.OnClickListener() {
-			@Override
 			public void onClick(DialogInterface dialoginterface, int i) {
 				IconContextMenuItem item = (IconContextMenuItem) menuAdapter.getItem(i);
 				
@@ -144,23 +143,19 @@ public class IconContextMenu implements DialogInterface.OnCancelListener,
 	    	mItems.add(menuItem);
 	    }
 	    
-		@Override
 		public int getCount() {
 			return mItems.size();
 		}
 
-		@Override
 		public Object getItem(int position) {
 			return mItems.get(position);
 		}
 
-		@Override
 		public long getItemId(int position) {
 			IconContextMenuItem item = (IconContextMenuItem) getItem(position);
 			return item.actionTag;
 		}
 
-		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			IconContextMenuItem item = (IconContextMenuItem) getItem(position);
 			

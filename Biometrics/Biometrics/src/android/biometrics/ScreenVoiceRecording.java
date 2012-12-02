@@ -44,7 +44,6 @@ public class ScreenVoiceRecording extends Activity {
 
 	View.OnClickListener OnClickHandler = new View.OnClickListener() {
 
-		@Override
 		public void onClick(View v) {
 			switch (v.getId()) {
 			case R.id.play:
@@ -127,7 +126,6 @@ public class ScreenVoiceRecording extends Activity {
 
 	class CountDownRunner implements Runnable {
 		
-		@Override
 		public void run() {
 			while (!Thread.currentThread().isInterrupted()) {
 				try {

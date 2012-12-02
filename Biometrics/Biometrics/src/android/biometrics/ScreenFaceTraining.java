@@ -43,9 +43,7 @@ import android.widget.Toast;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
 public class ScreenFaceTraining extends Activity {
-	public static final int MIN_FACE_IMAGE_CAPTURED = 2; 
 	private static final String TAG = ScreenFaceTraining.class.getCanonicalName();
-	private static final int REQ_CAMERA_CAPTURE = 7;
 	
 	private ImageView mIvFace;
 	private Gallery mGallery;
@@ -75,7 +73,6 @@ public class ScreenFaceTraining extends Activity {
 		mGallery = (Gallery) findViewById(R.id.gallery);
 		mGallery.setOnItemClickListener(new OnItemClickListener() {
 
-			@Override
 			public void onItemClick(AdapterView<?> adapter, View v, int pos,
 					long id) {
 				String src = (String)adapter.getItemAtPosition(pos);
@@ -126,7 +123,6 @@ public class ScreenFaceTraining extends Activity {
      
     View.OnClickListener OnClickButtonHandler = new View.OnClickListener() {
 		
-		@Override
 		public void onClick(View v) {
 			switch (v.getId()) {
 			case R.id.btnCapture:
@@ -191,7 +187,7 @@ public class ScreenFaceTraining extends Activity {
 		 * Just push image path in extra, that is real image path later.
 		 */
 		
-		if(requestCode == REQ_CAMERA_CAPTURE && resultCode == RESULT_OK){
+		if(requestCode == AppConst.REQ_CAMERA_CAPTURE && resultCode == RESULT_OK){
 			if(extraImagePath != null){
 	    		Bitmap bm = FaceHelper.processBitmap4Display(extraImagePath);
 	    		if(bm != null){
@@ -203,6 +199,8 @@ public class ScreenFaceTraining extends Activity {
 	    		mAdapter.notifyDataSetChanged();
 	    	}
 		}
+		
+	
 	}
 	
 	private class GalleryApdapter extends BaseAdapter{
@@ -213,29 +211,25 @@ public class ScreenFaceTraining extends Activity {
 			mInflater = LayoutInflater.from(context);
 		}
 		
-		@Override
 		public int getCount() {
 			return mCapturedFaceImages.size();
 		}
 
-		@Override
 		public String getItem(int arg0) {
 			return mCapturedFaceImages.get(arg0);
 		}
 
-		@Override
 		public long getItemId(int arg0) {
 			return arg0;
 		}
 
-		@Override
 		public View getView(int pos, View convertView, ViewGroup parent) {
 			if(convertView == null){
 				convertView = mInflater.inflate(R.layout.view_item_gallery, null);
 			}
 
 			String src = getItem(pos);
-			Bitmap bm = BitmapFactory.decodeFile(src);
+			Bitmap bm = FaceHelper.decodeBitmapResized(src, 72, 72);
 			bm = Bitmap.createScaledBitmap(bm, 64, 64, false);
 			if(bm != null){
 				((ImageView)convertView.findViewById(R.id.imageview)).setImageBitmap(bm);
@@ -253,7 +247,6 @@ public class ScreenFaceTraining extends Activity {
 		
 		File[] files = folder.listFiles(new FileFilter() {
 			
-			@Override
 			public boolean accept(File pathname) {
 				return pathname.getAbsolutePath().toLowerCase().endsWith(FaceHelper.JPG_EXTENSION);
 			}
@@ -276,12 +269,12 @@ public class ScreenFaceTraining extends Activity {
 		extraImagePath = imageFile.getAbsolutePath();
 		
 		Log.e(TAG, "callCameraImageCapturer->"+extraImagePath);
-		startActivityForResult(intent, REQ_CAMERA_CAPTURE);
+		startActivityForResult(intent, AppConst.REQ_CAMERA_CAPTURE);
 	}
 	
 	private void train(){
-		if(mCapturedFaceImages.size() < MIN_FACE_IMAGE_CAPTURED){
-			Toast.makeText(this, getString(R.string.toast_not_enough_faces, MIN_FACE_IMAGE_CAPTURED), 
+		if(mCapturedFaceImages.size() < AppConst.MIN_FACE_IMAGE_CAPTURED){
+			Toast.makeText(this, getString(R.string.toast_not_enough_faces, AppConst.MIN_FACE_IMAGE_CAPTURED), 
 					Toast.LENGTH_LONG).show();
 			return;
 		}
@@ -293,28 +286,7 @@ public class ScreenFaceTraining extends Activity {
 	 * @author Nhat Nguyen
 	 * Don't care about 2 tasks below, I use those in other job ^_^
 	 */
-	
-//	int numClick = 0;
-//	private void doOtherJob(){
-//		numClick ++;
-//		if(numClick%4 == 1){
-//			new CollectPGMFileTask().execute(
-//					Environment.getExternalStorageDirectory().getAbsolutePath()
-//					+"/FaceRecognition/Database/att_faces/s1/1.pgm");
-//		}else if(numClick%4 == 2){
-//			new GeneratePNGFileTask().execute(
-//					Environment.getExternalStorageDirectory().getAbsolutePath()
-//					+"/FaceRecognition/Database/att_faces/s1/1.pgm");
-//		}else if(numClick%4 == 3){
-//			new CollectPGMFileTask().execute(
-//					Environment.getExternalStorageDirectory().getAbsolutePath()
-//					+"/FaceRecognition/Database/Yale/yaleB01/yaleB01_P00A+000E+00.pgm");
-//		}else if(numClick%4 == 0){
-//			new GeneratePNGFileTask().execute(
-//					Environment.getExternalStorageDirectory().getAbsolutePath()
-//					+"/FaceRecognition/Database/Yale/yaleB01/yaleB01_P00A+000E+00.pgm");
-//		}
-//	}
+
 	
 	class CollectPGMFileTask extends AsyncTask<String, Void, Void>{
 		ProgressDialog dialog;
@@ -334,7 +306,6 @@ public class ScreenFaceTraining extends Activity {
 			File tf = f.getParentFile().getParentFile();
 			File[] tfs = tf.listFiles(new FileFilter() {
 				
-				@Override
 				public boolean accept(File pathname) {
 					return !pathname.getName().endsWith(".txt");
 				}
@@ -343,7 +314,6 @@ public class ScreenFaceTraining extends Activity {
 			for(File ff : tfs){
 				File[] ffs = ff.listFiles(new FileFilter() {
 					
-					@Override
 					public boolean accept(File pathname) {
 						return pathname.getName().endsWith(".pgm");
 					}
@@ -392,7 +362,6 @@ public class ScreenFaceTraining extends Activity {
 			File tf = f.getParentFile().getParentFile();
 			File[] tfs = tf.listFiles(new FileFilter() {
 				
-				@Override
 				public boolean accept(File pathname) {
 					return ! pathname.getName().endsWith(".txt");
 				}
@@ -401,7 +370,6 @@ public class ScreenFaceTraining extends Activity {
 			for(File ff : tfs){
 				File[] ffs = ff.listFiles(new FileFilter() {
 					
-					@Override
 					public boolean accept(File pathname) {
 						return pathname.getName().endsWith(".pgm");
 					}

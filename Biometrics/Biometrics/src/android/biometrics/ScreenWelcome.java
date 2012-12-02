@@ -1,9 +1,5 @@
 package android.biometrics;
 
-import java.io.File;
-import java.util.Timer;
-import java.util.TimerTask;
-
 import android.app.Activity;
 import android.biometrics.util.AppConst;
 import android.biometrics.util.AppUtil;
@@ -11,37 +7,76 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 
 public class ScreenWelcome extends Activity {
 	private static final String TAG = ScreenWelcome.class.getCanonicalName();
 	private static final int DEFAULT_SPLASH_TIME = 2000;
+	int recogMode ;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.screen_welcome);
+		setContentView(R.layout.screen_welcome_new); 
+		ImageView img_Setting, img_Train, img_Recognize;
+		img_Setting = (ImageView)findViewById(R.id.btn_main_setting);
+		img_Setting.setOnClickListener(OnClickHandler);
 		
-//		ImageView iv;
-//		iv = (ImageView) findViewById(R.id.logo_face);
-//		iv.setOnClickListener(OnClickHandler);
-//		iv = (ImageView) findViewById(R.id.logo_voice);
-//		iv.setOnClickListener(OnClickHandler);
+		img_Recognize = (ImageView)findViewById(R.id.btn_main_Recognize);
+		img_Recognize.setOnClickListener(OnClickHandler);
+//		Timer timer = new Timer();
+//		imgView.setOnClickListener(OnClickHandler);
+//		timer.schedule(task, DEFAULT_SPLASH_TIME);
+
+		img_Train =(ImageView) findViewById(R.id.btn_main_train);
+		img_Train.setOnClickListener(OnClickHandler);
 		
-		Timer timer = new Timer();
-		timer.schedule(task, DEFAULT_SPLASH_TIME);
+		recogMode = AppUtil.getRecognitionMode(getApplicationContext());
+		
+		// Check training set is exists?
+		if(AppUtil.isTrainingSetAvailable()){
+			img_Train.setVisibility(View.GONE);
+			img_Recognize.setVisibility(View.VISIBLE);
+		}else{
+			img_Train.setVisibility(View.VISIBLE);
+			img_Recognize.setVisibility(View.GONE);
+		}
+		Log.i("size","check training set "+ AppUtil.isTrainingSetAvailable()+"");
+		Log.i("size", "mode "+recogMode);
 	}
-	
+
 	View.OnClickListener OnClickHandler = new View.OnClickListener() {
-		
-		@Override
 		public void onClick(View v) {
 			Intent intent = null;
+			recogMode = AppUtil.getRecognitionMode(getApplicationContext());
 			switch (v.getId()) {
-			case R.id.logo_face:
+			case R.id.btn_main_train:
 				intent = new Intent(ScreenWelcome.this, ScreenFaceTraining.class);
 				break;
-			case R.id.logo_voice:
-				intent = new Intent(ScreenWelcome.this, ScreenVoiceTraining.class);
+			case R.id.btn_main_Recognize:
+				switch (recogMode) {
+				case AppConst.RECOGNITION_MODE_JUST_FACE:
+					intent = new Intent(ScreenWelcome.this, ScreenFaceRecognizing.class);
+					break;
+				case AppConst.RECOGNITION_MODE_JUST_VOICE:
+					intent = new Intent(ScreenWelcome.this, ScreenVoiceRecognizing.class);
+					break;
+				case AppConst.RECOGNITION_MODE_FACE_FIRST:
+					intent = new Intent(ScreenWelcome.this, ScreenFaceRecognizing.class);
+					break;
+				case AppConst.RECOGNITION_MODE_VOICE_FIRST:
+					intent = new Intent(ScreenWelcome.this, ScreenVoiceRecognizing.class);
+					break;
+				case AppConst.RECOGNITION_MODE_BOTH:
+					intent = new Intent(ScreenWelcome.this, ScreenFaceRecognizing.class);
+					break;
+
+				default:
+					break;
+				}				
+				break;
+			case R.id.btn_main_setting:
+				intent = new Intent(ScreenWelcome.this, ScreenSettings.class);
 				break;
 			}
 			
@@ -49,21 +84,21 @@ public class ScreenWelcome extends Activity {
 		}
 	};
 	
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+	/*protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 		if(requestCode == 7 && resultCode == RESULT_OK){
 			chooseNextScreen();
 		}
-	};
+	};*/
 	
-	private TimerTask task = new TimerTask() {
+	/*private TimerTask task = new TimerTask() {
 		
 		@Override
 		public void run() {
 			chooseNextScreen();
 		}
-	};
-	
+	};*/
+	/*
 	private void chooseNextScreen(){
 		Intent intent = null;
 		if(Biometrics.isFirstTime){
@@ -127,6 +162,7 @@ public class ScreenWelcome extends Activity {
 		}
 
 		startActivity(intent);
-		finish();
+//		finish();
 	}
+	*/
 }

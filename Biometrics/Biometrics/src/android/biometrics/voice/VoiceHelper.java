@@ -66,31 +66,6 @@ public class VoiceHelper {
 		ArrayList<PointList> arrayPointList = new ArrayList<PointList>();
 		
 		if (file.exists()) {
-//			try {
-//			int numberOfKMean = 0; //dem so KMeans trong txt, 16 vector Kmean ~ 1 numberOfKMean
-//				Scanner sc = new Scanner(file);
-//				while (sc.hasNextDouble()) { //moi vong while se duyet qua 16 vector KMean
-//					numberOfKMean++;
-//					PointList pl = new PointList(20);
-//					for (int k=0;k<16;k++) {
-//						double[] point = new double[20];
-//						for (int j=0;j<20;j++) {
-//							point[j] = sc.nextDouble();
-//						}
-//						pl.add(point);
-//					}
-//					arrayPointList.add(pl);
-//				}
-//				Log.i("size", "number training read " + numberOfKMean);
-//				return arrayPointList;
-//			} catch (FileNotFoundException e) {
-//				e.printStackTrace();
-//			}
-			
-			/**
-			 * @author Nhat Nguyen
-			 * Xem lai code o duoi xem co dung yeu cau ko?
-			 */
 			BufferedReader reader;
 			try {
 				reader = new BufferedReader(new FileReader(file));

@@ -2,7 +2,6 @@ package android.biometrics;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +16,6 @@ import android.biometrics.voice.VoiceTrainer;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.util.Log;
@@ -41,8 +39,6 @@ public class ScreenVoiceTraining extends Activity {
 
 	private static final String TAG = ScreenVoiceTraining.class
 			.getCanonicalName();
-	private static final int MIN_VOICE_SAMPLE = 2;
-	private static final int REQ_RECORD_VOICE = 7;
 
 	private List<String> mVoicePaths;
 	private MediaPlayer mPlayer;
@@ -70,10 +66,10 @@ public class ScreenVoiceTraining extends Activity {
 		bt.setOnClickListener(OnClickButtonHandler);
 		bt = (ImageView) findViewById(R.id.btnSave);
 		bt.setOnClickListener(OnClickButtonHandler);
-		bt = (ImageView) findViewById(R.id.btnSettings);
-		bt.setOnClickListener(OnClickButtonHandler);
-		bt = (ImageView) findViewById(R.id.btnModeRecognizing);
-		bt.setOnClickListener(OnClickButtonHandler);
+//		bt = (ImageView) findViewById(R.id.btnSettings);
+//		bt.setOnClickListener(OnClickButtonHandler);
+//		bt = (ImageView) findViewById(R.id.btnModeRecognizing);
+//		bt.setOnClickListener(OnClickButtonHandler);
 
 		mVoicePaths = new ArrayList<String>();
 		voiceInfoSet = new ArrayList<VoiceItem>();
@@ -97,7 +93,6 @@ public class ScreenVoiceTraining extends Activity {
 
 		mListView.setOnItemLongClickListener(new OnItemLongClickListener() {
 
-			@Override
 			public boolean onItemLongClick(AdapterView<?> adapter, View parent,
 					int position, long id) {
 				TouchPosition = position;
@@ -109,7 +104,6 @@ public class ScreenVoiceTraining extends Activity {
 
 		mListView.setOnItemClickListener(new OnItemClickListener() {
 
-			@Override
 			public void onItemClick(AdapterView<?> arg0, View arg1, int pos,
 					long id) {
 				TouchPosition = pos;
@@ -132,7 +126,6 @@ public class ScreenVoiceTraining extends Activity {
 		// set onclick listener for context menu
 		iconContextMenu
 				.setOnClickListener(new IconContextMenu.IconContextMenuOnClickListener() {
-					@Override
 					public void onClick(int menuId) {
 						switch (menuId) {
 						case MENU_ITEM_1_ACTION:
@@ -190,7 +183,6 @@ public class ScreenVoiceTraining extends Activity {
 
 	View.OnClickListener OnClickButtonHandler = new View.OnClickListener() {
 
-		@Override
 		public void onClick(View v) {
 			switch (v.getId()) {
 			case R.id.btnRecord:
@@ -202,7 +194,7 @@ public class ScreenVoiceTraining extends Activity {
 				}
 				Intent intent = new Intent(ScreenVoiceTraining.this,
 						ScreenVoiceRecording.class);
-				startActivityForResult(intent, REQ_RECORD_VOICE);
+				startActivityForResult(intent, AppConst.REQ_RECORD_VOICE);
 
 				break;
 			case R.id.btnSave:
@@ -215,16 +207,16 @@ public class ScreenVoiceTraining extends Activity {
 
 				train();
 				break;
-			case R.id.btnSettings:
-				Intent i = new Intent(ScreenVoiceTraining.this,
-						ScreenSettings.class);
-				startActivity(i);
-				break;
-			case R.id.btnModeRecognizing:
-				Intent intent1 = new Intent(ScreenVoiceTraining.this,
-						ScreenVoiceRecognizing.class);
-				startActivity(intent1);
-				break;
+//			case R.id.btnSettings:
+//				Intent i = new Intent(ScreenVoiceTraining.this,
+//						ScreenSettings.class);
+//				startActivity(i);
+//				break;
+//			case R.id.btnModeRecognizing:
+//				Intent intent1 = new Intent(ScreenVoiceTraining.this,
+//						ScreenVoiceRecognizing.class);
+//				startActivity(intent1);
+//				break;
 			}
 		}
 	};
@@ -257,7 +249,6 @@ public class ScreenVoiceTraining extends Activity {
 
 		File[] files = folder.listFiles(new FileFilter() {
 
-			@Override
 			public boolean accept(File pathname) {
 				return pathname.getAbsolutePath().toLowerCase()
 						.endsWith(VoiceHelper.VOICE_EXTENSION);
@@ -285,40 +276,9 @@ public class ScreenVoiceTraining extends Activity {
 		}
 	}
 
-	private void playVoiceSample(String path) {
-		if (mPlayer != null)
-			mPlayer.reset();
-		else
-			mPlayer = new MediaPlayer();
-
-		mPlayer.setAudioStreamType(AudioManager.STREAM_VOICE_CALL);
-		try {
-			mPlayer.setDataSource(path);
-			mPlayer.prepare();
-			mPlayer.start();
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-		} catch (IllegalStateException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void pauseVoicePlayer() {
-		if (mPlayer != null)
-			mPlayer.pause();
-	}
-
-	private void stopVoicePlayer() {
-		if (mPlayer != null && mPlayer.isPlaying()) {
-			mPlayer.stop();
-		}
-	}
-
 	private void train() {
-		if (voiceInfoSet.size() < MIN_VOICE_SAMPLE) {
-			Toast.makeText(this, getString(R.string.toast_not_enough_voices, MIN_VOICE_SAMPLE),
+		if (voiceInfoSet.size() < AppConst.MIN_VOICE_SAMPLE) {
+			Toast.makeText(this, getString(R.string.toast_not_enough_voices, AppConst.MIN_VOICE_SAMPLE),
 					Toast.LENGTH_LONG).show();
 			return;
 		}
@@ -329,17 +289,19 @@ public class ScreenVoiceTraining extends Activity {
 
 		VoiceTrainer trainer = new VoiceTrainer(ScreenVoiceTraining.this);
 		trainer.train(mVoicePaths);
+		
 	}
 
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
-		if (requestCode == REQ_RECORD_VOICE && resultCode == RESULT_OK) {
+		if (requestCode == AppConst.REQ_RECORD_VOICE && resultCode == RESULT_OK) {
 			String newVoicePath = data.getExtras().getString("path");
 			String newVoiceDuration = data.getExtras().getString("duration");
 
 			voiceInfoSet.add(new VoiceItem(newVoicePath, newVoiceDuration));
 			mAdapter.notifyDataSetChanged();
 		}
+		
 	}
 
 	private class VoiceAdapter extends BaseAdapter {
@@ -350,22 +312,18 @@ public class ScreenVoiceTraining extends Activity {
 			mInflater = LayoutInflater.from(context);
 		}
 
-		@Override
 		public int getCount() {
 			return voiceInfoSet.size();
 		}
 
-		@Override
 		public Object getItem(int position) {
 			return voiceInfoSet.get(position);
 		}
 
-		@Override
 		public long getItemId(int position) {
 			return position;
 		}
 
-		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			VoiceViewHolder holder;
 			if (convertView == null) {
