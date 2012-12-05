@@ -46,7 +46,8 @@
             android:label="Training"/>
         <activity android:name=".ScreenVoiceRecognizing"
             android:screenOrientation="portrait"
-            android:label="Recognizing"/>
+            android:label="Recognizing"
+            android:theme="@android:style/Theme.Translucent"/>
         <activity android:name=".ScreenVoiceRecording"
             android:screenOrientation="portrait"
             android:label="Record new voice"

@@ -29,21 +29,21 @@ public class AppUtil {
 		editor.putBoolean(key, value);
 		editor.commit();
 	}
-	
+	// Will be deteted
 	public static void savePreference(Context context, String key, String value){
 		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
 		SharedPreferences.Editor editor = pref.edit();
 		editor.putString(key, value);
 		editor.commit();
 	}
-	
+	// Will be deteted
 	public static void savePreference(Context context, String key, Float value){
 		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
 		SharedPreferences.Editor editor = pref.edit();
 		editor.putFloat(key, value);
 		editor.commit();
 	}
-	
+
 	public static float getPreference(Context context, String key){
 		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
 		if(key.equals(AppConst.CONFIDENT_FACE_CALCULATED)){
@@ -61,7 +61,7 @@ public class AppUtil {
 				""+AppConst.RECOGNITION_MODE_JUST_FACE)
 		);
 	}
-	
+	// Will be deteted
 	public static boolean isTrained(Context context, String key){
 		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
 		return pref.getBoolean(key, false);
@@ -254,7 +254,7 @@ public class AppUtil {
 	 * @param FaceOrVoice
 	 *            true if clear face images, false if clear voice samples
 	 */
-	public static void clearTrainingSampleFromSdcard(boolean FaceOrVoice) {
+	public static void deleteTrainingSampleFromSdcard(boolean FaceOrVoice) {
 		File f = new File(AppConst.APP_FOLDER);
 		final String filterAttribute;
 		if (FaceOrVoice) {
@@ -263,7 +263,7 @@ public class AppUtil {
 			filterAttribute = VoiceHelper.VOICE_EXTENSION;
 
 		}
-		clearTrainingData(FaceOrVoice);
+//		clearTrainingData(FaceOrVoice);
 		
 		File[] files = f.listFiles(new FileFilter() {
 			
@@ -278,7 +278,11 @@ public class AppUtil {
 		}
 	}
 
-	public static void clearTrainingData(boolean FaceOrVoice){
+	/**
+	 * Clear traingning data file from SDcard
+	 * @param FaceOrVoice
+	 */
+	public static void deleteTrainingData(boolean FaceOrVoice){
 		String filepath;
 		if(FaceOrVoice){
 			filepath = AppConst.FACE_DATA_FILE_PATH;
@@ -299,6 +303,45 @@ public class AppUtil {
 		return state.equals(Environment.MEDIA_MOUNTED);
 	}
 
+	// Checking the existence of face_data.xml file
+	public static boolean isFaceTrained(Context context){
+		File dataFile = new File( context.getFilesDir(), 
+				AppConst.FACE_DATA_FILE_NAME);
+		return dataFile.exists();
+	}
+	
+	// Checking the existence of voice_data.txt file
+	public static boolean isVoiceTrained(Context context){
+		File dataFile = new File( context.getFilesDir(), 
+				AppConst.VOICE_DATA_FILE_NAME);
+		return dataFile.exists();
+	}
+	
+	// Checking the existence of voice_data.txt file
+	public static boolean isFaceVoiceTrained(Context context){
+		return isFaceTrained(context) && isVoiceTrained(context);
+	}
+	
+	// Delete face_data.xml
+	public static void deleteFaceTrainingFile(Context context){
+		File dataFile = new File(context.getFilesDir(), 
+				AppConst.FACE_DATA_FILE_NAME);
+		dataFile.delete();
+	}
+	
+	// Delete voice_data.txt
+	public static void deleteVoiceTrainingFile(Context context){
+		File dataFile = new File(context.getFilesDir(), 
+				AppConst.VOICE_DATA_FILE_NAME);
+		dataFile.delete();
+	}
+	
+	// Delete face_data.xml & voice_data.txt
+	public static void deleteTrainingFiles(Context context){
+		deleteFaceTrainingFile(context);
+		deleteVoiceTrainingFile(context);
+	}
+	
 	public static String generateVoiceNameAtThisTime() {
 		Calendar cal = Calendar.getInstance();
 		return DateFormat.format("yyyyMMdd_kkmmss", cal).toString()
@@ -335,8 +378,14 @@ public class AppUtil {
 		else
 			return "" + num;
 	}
-	
-	public static boolean isTrainingSetAvailable(){
+
+	/**
+	 * Should be deteted, not work with external storage anymore
+	 * Use {@link isFaceVoiceTrained} insteed
+	 * @param originalPath
+	 * @return
+	 */
+	/*public static boolean isTrainingSetAvailable(){
 		if(!isSDCardAvailable())
 			return false;
 		File faceTrained = new File(AppConst.FACE_DATA_FILE_PATH);
@@ -344,7 +393,7 @@ public class AppUtil {
 		if(!faceTrained.exists() || !voiceTrained.exists())
 			return false;
 		return true;
-	}
+	}*/
 
 	public static String getHENameFromJPGName(String originalPath){
 		File f = new File(originalPath);
@@ -353,7 +402,7 @@ public class AppUtil {
 	}
 	
 	public static String getPGMNameFromHEName(String originalPath){
-        return originalPath.replace(FaceHelper.JPG_EXTENSION, "_pgm" + FaceHelper.PGM_EXTENSION);
+        return originalPath.replace(FaceHelper.JPG_EXTENSION, FaceHelper.PGM_EXTENSION);
 	}
 
 }

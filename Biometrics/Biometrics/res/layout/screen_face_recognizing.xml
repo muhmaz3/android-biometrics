@@ -3,83 +3,69 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical" >
-	<RelativeLayout
-			android:layout_width="match_parent"
-			android:layout_height="match_parent">
-		    <ImageView
-		    	android:layout_width ="match_parent"
-		    	android:layout_height ="match_parent"
-		    	android:src ="@drawable/bg"/>			
-		</RelativeLayout>
-		<LinearLayout 
-	  		android:layout_width ="match_parent"
-	  		android:layout_height ="match_parent"
-			android:orientation= "vertical">
-	    <TextView
-	        android:id="@+id/tvStatus"
-	        android:layout_width="fill_parent"
-	        android:layout_height="48dp"
-	        android:background="@android:color/darker_gray"
-	        android:gravity="center"
-	        android:padding="6dp"
-	        android:text="Face Recognition" android:textSize="18sp"
-	        android:textColor="#ff0000" />
-	
-	    <ImageView
-	        android:id="@+id/ivFace"
-	        android:layout_width="wrap_content"
-	        android:layout_height="0dp"
-	        android:layout_weight="1"
-	        android:layout_gravity="center"
-	        android:src="@drawable/ic_smile" />
-	
-	    <LinearLayout
-	        android:layout_width="fill_parent"
-	        android:layout_height="54dp"
-	        android:background="@android:color/darker_gray"
-	        android:gravity="center"
-	        android:paddingLeft="4dp" android:paddingRight="4dp"
-	        android:paddingTop="6dp" android:paddingBottom="6dp">
-			<!--
-	        <LinearLayout
-	            android:layout_width="0dp"
-	            android:layout_height="wrap_content"
-	            android:layout_weight="1"
-	            android:orientation="vertical" >
-	
-	             <nhatnq.biometrics.ui.ScrollingTextView
-	                android:layout_width="wrap_content"
-	                android:layout_height="wrap_content"
-	                android:ellipsize="marquee"
-	                android:singleLine="true"
-	                android:text="Confidence threshold"
-	                android:textColor="#00ffff" /> 
-				 
-	            <Spinner
-	                android:id="@+id/spinner_threshold"
-	                android:layout_width="fill_parent"
-	                android:layout_height="wrap_content"
-	                android:entries="@array/pref_confidence_threshold"
-	                android:prompt="@string/pref_confidence_threshold" />
-	                 
-	        </LinearLayout> -->
-	
-	        <ImageView
-	            android:id="@+id/btnCapture"
-	            android:layout_width="0dp"
-	            android:layout_height="wrap_content"
-	            android:layout_weight="1"
-	            android:src="@drawable/ic_camera" 
-	            android:background="@drawable/bg_action_icon"
-	            android:layout_marginLeft="4dp" android:layout_marginRight="4dp"/>
-	
-	        <ImageView
-	            android:id="@+id/btnRecognize"
-	            android:layout_width="0dp"
-	            android:layout_height="wrap_content"
-	            android:layout_weight="1"
-	            android:src="@drawable/ic_mode_recognizing" 
-	            android:background="@drawable/bg_action_icon"/>
-	    </LinearLayout>
-	</LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" 
+        android:background="#eeffffff">
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical" >
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="fill_parent"
+            android:layout_height="52dp"
+            android:background="@android:color/darker_gray"
+            android:gravity="center"
+            android:padding="6dp"
+            android:text="Face Recognition"
+            android:textColor="#ff0000"
+            android:textSize="18sp" />
+
+        <ImageView
+            android:id="@+id/ivFace"
+            android:layout_width="fill_parent"
+            android:layout_height="0dp"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:layout_margin="16dp"
+            android:src="@drawable/ic_face_smile" />
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="54dp"
+            android:background="@android:color/darker_gray"
+            android:gravity="center"
+            android:paddingBottom="6dp"
+            android:paddingLeft="4dp"
+            android:paddingRight="4dp"
+            android:paddingTop="6dp" >
+
+            <Button
+                android:id="@+id/btnCapture"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="4dp"
+                android:layout_weight="1"
+                android:padding="2dp"
+                android:text="Capture"
+                android:background="@drawable/bg_action_icon"
+                android:drawableLeft="@drawable/ic_camera" />
+
+            <Button
+                android:id="@+id/btnRecognize"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/bg_action_icon"
+                android:padding="2dp"
+                android:text="Recognize"
+                android:drawableRight="@drawable/ic_mode_recognizing" />
+        </LinearLayout>
+    </LinearLayout>
+
 </FrameLayout>

@@ -35,6 +35,7 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.Gallery;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
@@ -59,15 +60,15 @@ public class ScreenFaceTraining extends Activity {
 		mIvFace = (ImageView) findViewById(R.id.ivFace);
 		mIvFace.setScaleType(ScaleType.FIT_CENTER);
 		
-		ImageView bt;
-		bt = (ImageView) findViewById(R.id.btnCapture);
+		Button bt;
+		bt = (Button) findViewById(R.id.btnCapture);
 		bt.setOnClickListener(OnClickButtonHandler);
-		bt = (ImageView) findViewById(R.id.btnSave);
+		bt = (Button) findViewById(R.id.btnSave);
 		bt.setOnClickListener(OnClickButtonHandler);
 		
-		bt = (ImageView) findViewById(R.id.btnSettings);
+		bt = (Button) findViewById(R.id.btnSettings);
 		bt.setOnClickListener(OnClickButtonHandler);
-		bt = (ImageView) findViewById(R.id.btnModeRecognizing);
+		bt = (Button) findViewById(R.id.btnModeRecognizing);
 		bt.setOnClickListener(OnClickButtonHandler);
 		
 		mGallery = (Gallery) findViewById(R.id.gallery);
@@ -111,11 +112,11 @@ public class ScreenFaceTraining extends Activity {
     
     protected void onResume() {
     	super.onResume();
-    	Log.e(TAG, "onResume");
     	if(mCapturedFaceImages != null && mCapturedFaceImages.size() >= 1){
     		Bitmap bm = BitmapFactory.decodeFile(mCapturedFaceImages.get(mCapturedFaceImages.size()-1));
     		mIvFace.setImageBitmap(bm);
     		bm = null;
+    		mGallery.setSelection(mCapturedFaceImages.size() - 1, true);
     	}
     	
     	mAdapter.notifyDataSetChanged();
@@ -165,8 +166,8 @@ public class ScreenFaceTraining extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case Menu.FIRST:
-			AppUtil.clearTrainingSampleFromSdcard(true);
-			AppUtil.savePreference(this, AppConst.KEY_FACE_TRAINED, false);
+			AppUtil.deleteTrainingSampleFromSdcard(true);
+			AppUtil.deleteFaceTrainingFile(this);
 			
 			mIvFace.setImageResource(R.drawable.ic_face_smile);
 			
@@ -199,8 +200,6 @@ public class ScreenFaceTraining extends Activity {
 	    		mAdapter.notifyDataSetChanged();
 	    	}
 		}
-		
-	
 	}
 	
 	private class GalleryApdapter extends BaseAdapter{

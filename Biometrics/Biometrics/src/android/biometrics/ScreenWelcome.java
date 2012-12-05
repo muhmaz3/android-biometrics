@@ -5,14 +5,12 @@ import android.biometrics.util.AppConst;
 import android.biometrics.util.AppUtil;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
 public class ScreenWelcome extends Activity {
-	private static final String TAG = ScreenWelcome.class.getCanonicalName();
-	private static final int DEFAULT_SPLASH_TIME = 2000;
-	int recogMode ;
+//	private static final String TAG = ScreenWelcome.class.getCanonicalName();
+//	private static final int DEFAULT_SPLASH_TIME = 2000;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -31,24 +29,20 @@ public class ScreenWelcome extends Activity {
 		img_Train =(ImageView) findViewById(R.id.btn_main_train);
 		img_Train.setOnClickListener(OnClickHandler);
 		
-		recogMode = AppUtil.getRecognitionMode(getApplicationContext());
-		
 		// Check training set is exists?
-		if(AppUtil.isTrainingSetAvailable()){
+		if(AppUtil.isFaceVoiceTrained(this)){
 			img_Train.setVisibility(View.GONE);
 			img_Recognize.setVisibility(View.VISIBLE);
 		}else{
 			img_Train.setVisibility(View.VISIBLE);
 			img_Recognize.setVisibility(View.GONE);
 		}
-		Log.i("size","check training set "+ AppUtil.isTrainingSetAvailable()+"");
-		Log.i("size", "mode "+recogMode);
 	}
 
 	View.OnClickListener OnClickHandler = new View.OnClickListener() {
 		public void onClick(View v) {
 			Intent intent = null;
-			recogMode = AppUtil.getRecognitionMode(getApplicationContext());
+			int recogMode = AppUtil.getRecognitionMode(getApplicationContext());
 			switch (v.getId()) {
 			case R.id.btn_main_train:
 				intent = new Intent(ScreenWelcome.this, ScreenFaceTraining.class);

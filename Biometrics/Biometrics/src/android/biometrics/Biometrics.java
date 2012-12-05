@@ -5,7 +5,6 @@ import android.biometrics.util.AppUtil;
 import android.util.Log;
 
 public class Biometrics extends Application {
-//	public static boolean isFirstTime = true;
 	
 	@Override 
 	public void onCreate() {
