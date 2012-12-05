@@ -9,7 +9,9 @@ import lib.comirva.audio.PointList;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.biometrics.R;
+import android.biometrics.ScreenFaceRecognizing;
 import android.biometrics.ScreenVoiceRecognizing;
+import android.biometrics.combination.BiometricsCombinator;
 import android.biometrics.util.AppConst;
 import android.biometrics.util.AppUtil;
 import android.content.Intent;
@@ -25,12 +27,10 @@ public class VoiceRecognizer {
 	private static final String TAG = VoiceRecognizer.class.getCanonicalName();
 	private Activity context;
 	private ArrayList<PointList> trainingSet;
-
 	float resultConfident;
 	
 	public VoiceRecognizer(Activity base){
 		this.context = base;
-
 	}
 	
 	public void setTrainingSet(ArrayList<PointList> trainingSet){
@@ -49,22 +49,24 @@ public class VoiceRecognizer {
 			super.onPreExecute();
 			dialog = new ProgressDialog(context);
 			dialog.setMessage(context.getString(R.string.txt_recognizing));
-			dialog.show();
-			
+			dialog.setCancelable(false);
+			dialog.show();		
 		}
 		
 		@Override
 		protected Boolean doInBackground(String... params) {
 			String voiceFile = params[0];
 			File[] voiceInput = {new File(voiceFile)};
+			
+			// Load training data
+			trainingSet = VoiceHelper.readVoiceDataToPointList(context);
 			AudioFeatureExtraction tdet1 = new AudioFeatureExtraction(
 					trainingSet,new TimbreDistributionExtractor(),  voiceInput);
 			
 			resultConfident = (float) tdet1.run();
 			Log.e(TAG, "Distance result is "+ resultConfident);
 			
-			return true;
-			
+			return true;		
 		}
 		
 		@Override
@@ -79,13 +81,26 @@ public class VoiceRecognizer {
 			int mode = AppUtil.getRecognitionMode(context.getApplicationContext());	
 			switch (mode) {
 			case AppConst.RECOGNITION_MODE_BOTH:
-				float thresholdOfFace = AppUtil.getPreference(context.getApplicationContext(), AppConst.CONFIDENT_FACE_CALCULATED);
 				// TODO continue code to combine 2 threshold for recognize
+				float faceConfidenceVal = AppUtil.getPreference(context.getApplicationContext(), 
+						AppConst.CONFIDENT_FACE_CALCULATED);
+				boolean okay = BiometricsCombinator.combine(faceConfidenceVal, resultConfident);
+				if(okay){
+					view.setBackgroundColor(Color.rgb(0, 221, 119));
+					tv.setText(context.getString(R.string.recognize_success));
+				}else{
+					view.setBackgroundColor(Color.rgb(221, 0, 0));
+					tv.setText(context.getString(R.string.recognize_failed));
+				}
 				break;
 			
 			case AppConst.RECOGNITION_MODE_FACE_FIRST:				
 			case AppConst.RECOGNITION_MODE_JUST_VOICE:
-				if(resultConfident < ScreenVoiceRecognizing.threshold){
+				
+				//TODO Get threshold
+				int threshold = 0;
+				
+				if(resultConfident < threshold){
 					view.setBackgroundColor(Color.rgb(0, 221, 119));
 					tv.setText(context.getString(R.string.recognize_success));
 				}else{
@@ -96,7 +111,7 @@ public class VoiceRecognizer {
 			case AppConst.RECOGNITION_MODE_VOICE_FIRST:
 				if(resultConfident < ScreenVoiceRecognizing.threshold){
 					AppUtil.savePreference(context.getApplicationContext(),AppConst.CONFIDENT_FACE_CALCULATED, resultConfident);
-					Intent intent = new Intent(context, ScreenVoiceRecognizing.class);
+					Intent intent = new Intent(context, ScreenFaceRecognizing.class);
 					context.startActivity(intent);
 				}else{
 					view.setBackgroundColor(Color.rgb(221, 0, 0));

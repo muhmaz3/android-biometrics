@@ -18,6 +18,8 @@ public class ScreenVoiceRecording extends Activity {
 	private ImageView ivPlay;
 	private String voicePath;
 	private TextView txtStatus, txtDuration;
+	private Button btnSave;
+	
 	long startTime;
 	String durationTime;
 	boolean isRunThread = false;
@@ -35,10 +37,10 @@ public class ScreenVoiceRecording extends Activity {
 		txtStatus = (TextView) findViewById(R.id.status);
 		txtDuration = (TextView) findViewById(R.id.duration);
 
-		Button bt;
-		bt = (Button) findViewById(R.id.save);
-		bt.setOnClickListener(OnClickHandler);
-		bt = (Button) findViewById(R.id.cancel);
+		btnSave = (Button) findViewById(R.id.save);
+		btnSave.setOnClickListener(OnClickHandler);
+		btnSave.setEnabled(false);
+		Button bt = (Button) findViewById(R.id.cancel);
 		bt.setOnClickListener(OnClickHandler);
 	}
 
@@ -117,6 +119,10 @@ public class ScreenVoiceRecording extends Activity {
 							second = String.valueOf(seconds);
 						durationTime = min + ":" + second;
 						txtDuration.setText(durationTime);
+						
+						if(lenthTime >= AppConst.DEFAULT_MIN_VOICE_RECORD){
+							btnSave.setEnabled(true);
+						}
 					} catch (Exception e) {
 					}
 				}

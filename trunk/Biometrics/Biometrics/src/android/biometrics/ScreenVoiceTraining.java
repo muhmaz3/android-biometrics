@@ -30,7 +30,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.BaseAdapter;
-import android.widget.ImageView;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -61,14 +61,14 @@ public class ScreenVoiceTraining extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.screen_voice_training);
 
-		ImageView bt;
-		bt = (ImageView) findViewById(R.id.btnRecord);
+		Button bt;
+		bt = (Button) findViewById(R.id.btnRecord);
 		bt.setOnClickListener(OnClickButtonHandler);
-		bt = (ImageView) findViewById(R.id.btnSave);
+		bt = (Button) findViewById(R.id.btnSave);
 		bt.setOnClickListener(OnClickButtonHandler);
-//		bt = (ImageView) findViewById(R.id.btnSettings);
+//		bt = (Button) findViewById(R.id.btnSettings);
 //		bt.setOnClickListener(OnClickButtonHandler);
-//		bt = (ImageView) findViewById(R.id.btnModeRecognizing);
+//		bt = (Button) findViewById(R.id.btnModeRecognizing);
 //		bt.setOnClickListener(OnClickButtonHandler);
 
 		mVoicePaths = new ArrayList<String>();
@@ -108,8 +108,6 @@ public class ScreenVoiceTraining extends Activity {
 					long id) {
 				TouchPosition = pos;
 				showDialog(CONTEXT_MENU_ID);
-
-				// TODO Play this voice
 			}
 
 		});
@@ -155,7 +153,8 @@ public class ScreenVoiceTraining extends Activity {
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		menu.add(Menu.CATEGORY_ALTERNATIVE, Menu.FIRST, Menu.NONE, getString(R.string.clear_all_voices));
+		menu.add(Menu.CATEGORY_ALTERNATIVE, Menu.FIRST, Menu.NONE, 
+				getString(R.string.clear_all_voices));
 		return true;
 	}
 	
@@ -163,7 +162,8 @@ public class ScreenVoiceTraining extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case Menu.FIRST:
-			AppUtil.clearTrainingSampleFromSdcard(false);
+			AppUtil.deleteTrainingSampleFromSdcard(false);
+			AppUtil.deleteVoiceTrainingFile(this);
 			
 			mVoicePaths.clear();
 			voiceInfoSet.clear();
@@ -207,16 +207,6 @@ public class ScreenVoiceTraining extends Activity {
 
 				train();
 				break;
-//			case R.id.btnSettings:
-//				Intent i = new Intent(ScreenVoiceTraining.this,
-//						ScreenSettings.class);
-//				startActivity(i);
-//				break;
-//			case R.id.btnModeRecognizing:
-//				Intent intent1 = new Intent(ScreenVoiceTraining.this,
-//						ScreenVoiceRecognizing.class);
-//				startActivity(intent1);
-//				break;
 			}
 		}
 	};
@@ -243,7 +233,7 @@ public class ScreenVoiceTraining extends Activity {
 	}
 
 	private void fetchLocalVoices() {
-		File folder = new File(AppConst.APP_FOLDER);
+		File folder = new File(AppConst.VOICE_FOLDER);
 		if (!folder.exists())
 			AppUtil.createAppDirectory();
 
@@ -255,8 +245,6 @@ public class ScreenVoiceTraining extends Activity {
 			}
 		});
 
-		
-		
 		if (files == null)
 			return;
 		
@@ -288,8 +276,7 @@ public class ScreenVoiceTraining extends Activity {
 		}
 
 		VoiceTrainer trainer = new VoiceTrainer(ScreenVoiceTraining.this);
-		trainer.train(mVoicePaths);
-		
+		trainer.train(mVoicePaths);	
 	}
 
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {

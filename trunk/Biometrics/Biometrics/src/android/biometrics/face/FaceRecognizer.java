@@ -17,7 +17,6 @@ import java.io.File;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.biometrics.R;
-import android.biometrics.ScreenFaceRecognizing;
 import android.biometrics.ScreenVoiceRecognizing;
 import android.biometrics.util.AppConst;
 import android.biometrics.util.AppUtil;
@@ -65,8 +64,6 @@ public class FaceRecognizer {
 	/** the projected training faces */
 	CvMat projectedTrainFaceMat;
 	
-	SharedPreferences pref;
-	String mode;
 	enum Distance{
 		Euclidian, Mahalanobis
 	}
@@ -74,8 +71,6 @@ public class FaceRecognizer {
 	
 	public FaceRecognizer(Activity base) {
 		mBase = base;
-		pref = PreferenceManager.getDefaultSharedPreferences(mBase);
-		mode = pref.getString(mBase.getString(R.string.pref_setting_combine_key), mBase.getString(R.string.setting_both_key));
 	}
 
 	public void recognize(String imagePath) {
@@ -94,6 +89,7 @@ public class FaceRecognizer {
 			super.onPreExecute();
 			dialog = new ProgressDialog(mBase);
 			dialog.setMessage(mBase.getString(R.string.txt_recognizing));
+			dialog.setCancelable(false);
 			dialog.show();
 		}
 
@@ -140,7 +136,8 @@ public class FaceRecognizer {
 					mBase.startActivity(intent);
 					break;
 				case AppConst.RECOGNITION_MODE_FACE_FIRST:	
-					if(confidenceCalculated >= ScreenFaceRecognizing.threshold){
+					float threshhold = getConfidenceThreshold();
+					if(confidenceCalculated >= threshhold){
 						Intent intent2 = new Intent(mBase, ScreenVoiceRecognizing.class);
 						mBase.startActivity(intent2);
 					}else{
@@ -151,7 +148,8 @@ public class FaceRecognizer {
 					break;
 				case AppConst.RECOGNITION_MODE_JUST_FACE:
 				case AppConst.RECOGNITION_MODE_VOICE_FIRST:
-					if(confidenceCalculated >= ScreenFaceRecognizing.threshold){
+					float threshhold2 = getConfidenceThreshold();
+					if(confidenceCalculated >= threshhold2){
 						view.setBackgroundColor(Color.rgb(0, 221, 119));
 						tv.setText(mBase.getString(R.string.recognize_success));
 					}else{
@@ -167,8 +165,6 @@ public class FaceRecognizer {
 				toast.show();
 				mBase.finish();
 			}
-			
-			
 			
 			/**
 			 * Delete all face, because we do not need anymore
@@ -196,15 +192,11 @@ public class FaceRecognizer {
 
 			float confidence = 0.0f;
 			final FloatPointer pConfidence = new FloatPointer(confidence);
-			int iNearest = findNearestNeighbor(projectedTestFace, 
+			findNearestNeighbor(projectedTestFace, 
 					new FloatPointer(pConfidence), Distance.Mahalanobis);
-
-			confidenceCalculated = pConfidence.get();
 //			int nearest = trainPersonNumMat.data_i().get(iNearest);
-
-			printLog("Confidence = " + confidenceCalculated);
-			printLog("Confidence threshold = " + ScreenFaceRecognizing.threshold);
-
+			
+			confidenceCalculated = pConfidence.get();
 
 			return true;
 		}
@@ -220,8 +212,14 @@ public class FaceRecognizer {
 			CvFileStorage fileStorage;
 			int i;
 
+			/** TODO Internal/external storage
+			 * Now we get face data file from internal storage
+			 */
+			File dataFile = new File(mBase.getFilesDir(), AppConst.FACE_DATA_FILE_NAME);
+			String dataFilePath = dataFile.getAbsolutePath();
+			
 			fileStorage = cvOpenFileStorage(
-					AppConst.FACE_DATA_FILE_PATH, 
+					dataFilePath, 
 					null, CV_STORAGE_READ, null);
 			if (fileStorage == null) {
 				printLog(".loadTrainingData():: Cannot open database file '/facedata.xml'");
@@ -232,8 +230,6 @@ public class FaceRecognizer {
 			nTrainFaces = cvReadIntByName(fileStorage, null, "nTrainFaces", 0);
 
 			Pointer pointer;
-//			pointer = cvReadByName(fileStorage, null, "trainPersonNumMat", cvAttrList());
-//			pTrainPersonNumMat = new CvMat(pointer);
 
 			pointer = cvReadByName(fileStorage, null, "eigenValMat", cvAttrList());
 			eigenValMat = new CvMat(pointer);
@@ -300,6 +296,13 @@ public class FaceRecognizer {
 			return iNearest;
 		}
 
+	}
+	
+	private float getConfidenceThreshold(){
+		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(mBase);
+		return Float.parseFloat(pref.getString(
+				mBase.getString(R.string.pref_confidence_threshold_key), 
+				""+AppConst.DEFAULT_FACE_THRESHOLD));
 	}
 
 	/**

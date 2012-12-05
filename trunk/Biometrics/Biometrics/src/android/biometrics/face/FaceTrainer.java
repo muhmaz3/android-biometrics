@@ -30,18 +30,15 @@ import static com.googlecode.javacv.cpp.opencv_legacy.CV_EIGOBJ_NO_CALLBACK;
 import static com.googlecode.javacv.cpp.opencv_legacy.cvCalcEigenObjects;
 import static com.googlecode.javacv.cpp.opencv_legacy.cvEigenDecomposite;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import android.app.Activity;
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.biometrics.R;
-import android.biometrics.ScreenFaceTraining;
 import android.biometrics.ScreenVoiceTraining;
 import android.biometrics.util.AppConst;
-import android.biometrics.util.AppUtil;
-import android.content.Intent;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -77,7 +74,6 @@ public class FaceTrainer {
 	
 	private Activity mBase;
 	
-
 	public FaceTrainer(Activity context){
 		mBase = context;
 	}
@@ -123,22 +119,20 @@ public class FaceTrainer {
 			super.onPreExecute();
 			dialog = new ProgressDialog(mBase);
 			dialog.setMessage(mBase.getString(R.string.txt_processing));
+			dialog.setCancelable(false);
 			dialog.show();
 		}
 		
 		@Override
 		protected Boolean doInBackground(String... arg0) {	
-			//TODO remove block comment to run 
-/*			images = processOriginalImages(images);
+			images = processOriginalImages(images);
 			if(images == null || images.size() == 0){
 				printLog("Problem when extracting face from images.");
 				return false;
 			}
 			
 			return learn();
-			
-*/			return true;
-			}
+		}
 		
 		@Override
 		protected void onProgressUpdate(Integer... values) {
@@ -156,13 +150,10 @@ public class FaceTrainer {
 				Toast.makeText(mBase, mBase.getString(R.string.train_failed), 
 						Toast.LENGTH_LONG).show();
 			}else{
-				AppUtil.savePreference(mBase, AppConst.KEY_FACE_TRAINED, true);
-				Intent intent;
-				intent = new Intent(mBase, ScreenVoiceTraining.class);
-				mBase.startActivityForResult(intent, AppConst.REQ_TRAIN_VOICE);
+				Intent intent = new Intent(mBase, ScreenVoiceTraining.class);
+				mBase.startActivity(intent);
+				mBase.finish();
 			}
-
-			mBase.finish();
 		}
 
 	    public boolean learn() {
@@ -220,10 +211,6 @@ public class FaceTrainer {
 			return true;
 		}
 	    
-	    /**
-		 * Does the Principal Component Analysis, finding the average image 
-		 * and the eigen-faces that represent any image in the given dataset.
-		 */
 		private void doPCA() {
 			CvTermCriteria calcLimit;
 			CvSize faceImgSize = new CvSize();
@@ -271,26 +258,23 @@ public class FaceTrainer {
 	    
 	    /** Stores the training data to the file '/face_data.xml'. */
 		private void storeTrainingData() {
-			CvFileStorage fileStorage;
-			fileStorage = cvOpenFileStorage(AppConst.FACE_DATA_FILE_PATH,
+			/**
+			 * Internal/external storage 
+			 * If you want to save 'face_data.xml' at external storage (SDCard)
+			 * , use dataFilePath = AppConst.FACE_DATA_FILE_PATH
+			 * , otherwise, we use internal storage like this.
+			 */
+			File dataFile = new File(mBase.getFilesDir(), AppConst.FACE_DATA_FILE_NAME);
+			String dataFilePath = dataFile.getAbsolutePath();
+			
+			CvFileStorage fileStorage = cvOpenFileStorage(dataFilePath,
 					null,
 					CV_STORAGE_WRITE,
 					null);
 			
-//			cvWriteInt(fileStorage, "nPersons", nPersons); 
-//
-//			for (int i = 0; i < nPersons; i++) {
-//				String varname = "personName_" + (i + 1);
-//				cvWriteString(fileStorage, 
-//						varname,
-//						personNames.get(i) + "",
-//						0); // quote
-//			}
-			
 			cvWriteInt(fileStorage, "nEigens", nEigens); 
 			cvWriteInt(fileStorage, "nTrainFaces", nTrainFaces); 
-			// Matrix [1, nTrainFaces]
-//			cvWrite(fileStorage, "trainPersonNumMat", personNumTruthMat, cvAttrList()); 
+			
 			// Matrix [1, nEigens]
 			cvWrite(fileStorage, "eigenValMat", eigenValMat, cvAttrList()); 
 			// Matrix [nTrainFaces, nEigens]
@@ -302,20 +286,14 @@ public class FaceTrainer {
 				String varname = "eigenVect_" + i;
 				cvWrite(fileStorage, varname, eigenVectArr[i], cvAttrList()); 
 			}
-
+			
 			cvReleaseFileStorage(fileStorage);
 			
 			printLog("storeTrainingData(): DONE");
 		}
 		
-		/** 
-		 * Saves all the eigen-vectors as images, just for testing, preview algorithm */
 		private void storeEigenfaceImages() {
 			cvSaveImage(AppConst.FACE_FOLDER + "/out_averageImage.bmp", pAvgTrainImg);
-
-			// Create a large image made of many eigenface images.
-			// Must also convert each eigenface image to a normal 8-bit UCHAR image
-			// instead of a 32-bit float image.
 
 			if (nEigens > 0) {
 				int COLUMNS = 8; // Put up to 8 images on a row.
@@ -344,13 +322,7 @@ public class FaceTrainer {
 				printLog("storeEigenfaceImages(): DONE");
 			}
 		}
-		
-		/**
-		 * Converts the given float image to an unsigned character image.
-		 * 
-		 * @param srcImg the given float image
-		 * @return the unsigned character image
-		 */
+
 		private IplImage convertFloatImageToUcharImage(IplImage srcImg) {
 			IplImage dstImg;
 			if ((srcImg != null) && (srcImg.width() > 0 && srcImg.height() > 0)) {
@@ -400,12 +372,6 @@ public class FaceTrainer {
 	
 	private static void printLog(String log){
 		Log.e(TAG, log);
-	}
-	
-	static void printList(List<String> list){
-		for(String s : list){
-			printLog("List: "+s);
-		}
 	}
 
 	/***************************

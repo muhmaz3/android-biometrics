@@ -9,44 +9,36 @@ import android.biometrics.face.FaceRecognizer;
 import android.biometrics.util.AppConst;
 import android.biometrics.util.AppUtil;
 import android.content.Intent;
-
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 public class ScreenFaceRecognizing extends Activity {
-//	private static final String TAG = ScreenFaceRecognizing.class.getCanonicalName();
 	private String extraImagePath;
 	private ImageView mIvFace;
-	public static float threshold;  
-	public static boolean result = false;
-	private static String lastDirectory = Environment.getExternalStorageDirectory().getAbsolutePath();
+
+	private static String lastDirectory = 
+			Environment.getExternalStorageDirectory().getAbsolutePath();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.screen_face_recognizing);
-		
-		
-//		mThresholdSpn = (Spinner) findViewById(R.id.spinner_threshold);
-//		mThresholdSpn.setVisibility(View.GONE);
+
 		mIvFace = (ImageView) findViewById(R.id.ivFace);
 		
-		ImageView bt;
-		bt = (ImageView) findViewById(R.id.btnCapture);
+		Button bt;
+		bt = (Button) findViewById(R.id.btnCapture);
 		bt.setOnClickListener(ClickButtonHandler);
-		bt = (ImageView) findViewById(R.id.btnRecognize);
+		bt = (Button) findViewById(R.id.btnRecognize);
 		bt.setOnClickListener(ClickButtonHandler);
 		
 		if(savedInstanceState != null){
@@ -87,19 +79,18 @@ public class ScreenFaceRecognizing extends Activity {
 				callCameraImageCapturer();
 				break;
 			case R.id.btnRecognize:
-				//TODO modified here to recognize
-//				if(! AppUtil.isTrained(ScreenFaceRecognizing.this, AppConst.KEY_FACE_TRAINED)){
-//					Toast.makeText(ScreenFaceRecognizing.this, 
-//							getString(R.string.not_train_yet), 
-//							Toast.LENGTH_LONG).show();
-//					return;
-//				}
-//				if(extraImagePath == null){
-//					Toast.makeText(ScreenFaceRecognizing.this, 
-//							getString(R.string.toast_please_capture_your_face), 
-//							Toast.LENGTH_LONG).show();
-//					return;
-//				}
+				if(! AppUtil.isFaceTrained(getBaseContext())){
+					Toast.makeText(ScreenFaceRecognizing.this, 
+							getString(R.string.not_train_yet), 
+							Toast.LENGTH_LONG).show();
+					return;
+				}
+				if(extraImagePath == null){
+					Toast.makeText(ScreenFaceRecognizing.this, 
+							getString(R.string.toast_please_capture_your_face), 
+							Toast.LENGTH_LONG).show();
+					return;
+				}
 				
 				recognize();
 				break;
@@ -111,6 +102,7 @@ public class ScreenFaceRecognizing extends Activity {
 //		menu.add(Menu.CATEGORY_ALTERNATIVE, Menu.FIRST, Menu.NONE, "Pick Gallery");
 //		menu.add(Menu.CATEGORY_ALTERNATIVE, Menu.FIRST+1, Menu.NONE, "View gray-scale");
 		menu.add(Menu.CATEGORY_ALTERNATIVE, Menu.FIRST+2, Menu.NONE, "Clear training data");
+		menu.add(Menu.CATEGORY_ALTERNATIVE, Menu.FIRST+3, Menu.NONE, "View lastest confidence");
 		return true;
 	};
 	
@@ -128,10 +120,18 @@ public class ScreenFaceRecognizing extends Activity {
 			startActivity(intent);
 			break;
 		case Menu.FIRST + 2:
-			AppUtil.clearTrainingData(true);
+			AppUtil.deleteTrainingFiles(getApplicationContext());
 			finish();
 			intent = new Intent(ScreenFaceRecognizing.this, ScreenFaceTraining.class);
 			startActivity(intent);
+			break;
+		case Menu.FIRST + 3:
+			float faceConfidence = AppUtil.getPreference(getApplicationContext(), 
+					AppConst.CONFIDENT_FACE_CALCULATED);
+			if(faceConfidence != AppConst.DEFAULT_FACE_THRESHOLD){
+				Toast.makeText(getBaseContext(), "Lastest confidence: "+faceConfidence, 
+						Toast.LENGTH_LONG).show();
+			}
 			break;
 		}
 		return true;
@@ -149,7 +149,7 @@ public class ScreenFaceRecognizing extends Activity {
 
 		}else{
 			extraImagePath = null;
-			Toast.makeText(this, getString(R.string.capture_fail), Toast.LENGTH_SHORT).show();
+			// Remove Toast
 		}
 
 	}
@@ -165,23 +165,8 @@ public class ScreenFaceRecognizing extends Activity {
 	}
 
 	private void recognize(){
-
-//		int pos = mThresholdSpn.getSelectedItemPosition();
-//		String[] thresholds = getResources().getStringArray(R.array.pref_confidence_threshold);
-//		threshold = Float.parseFloat(thresholds[pos]);
-
-		threshold = getConfidenceThreshold();
-
-		
 		FaceRecognizer recog = new FaceRecognizer(ScreenFaceRecognizing.this);
 		recog.recognize(extraImagePath);
-	}
-	
-	private float getConfidenceThreshold(){
-		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
-		return Float.parseFloat(pref.getString(
-				getString(R.string.pref_confidence_threshold_key), 
-				""+AppConst.DEFAULT_FACE_THRESHOLD));
 	}
 	
 }
