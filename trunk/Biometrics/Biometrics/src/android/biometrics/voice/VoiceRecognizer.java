@@ -97,9 +97,8 @@ public class VoiceRecognizer {
 			case AppConst.RECOGNITION_MODE_FACE_FIRST:				
 			case AppConst.RECOGNITION_MODE_JUST_VOICE:
 				
-				//TODO Get threshold
-				int threshold = 0;
-				
+				float threshold = AppUtil.getPreference(context, AppConst.VOICE_THRESHOLD);
+				Log.i("size", "threshold in recognizer "+ threshold);
 				if(resultConfident < threshold){
 					view.setBackgroundColor(Color.rgb(0, 221, 119));
 					tv.setText(context.getString(R.string.recognize_success));
@@ -109,7 +108,8 @@ public class VoiceRecognizer {
 				}
 				break;
 			case AppConst.RECOGNITION_MODE_VOICE_FIRST:
-				if(resultConfident < ScreenVoiceRecognizing.threshold){
+				float threshold1 = AppUtil.getPreference(context, AppConst.VOICE_THRESHOLD);
+				if(resultConfident < threshold1){
 					AppUtil.savePreference(context.getApplicationContext(),AppConst.CONFIDENT_FACE_CALCULATED, resultConfident);
 					Intent intent = new Intent(context, ScreenFaceRecognizing.class);
 					context.startActivity(intent);
@@ -128,4 +128,5 @@ public class VoiceRecognizer {
 		}
 		
 	}
+	
 }

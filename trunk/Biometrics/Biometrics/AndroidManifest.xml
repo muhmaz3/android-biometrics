@@ -29,6 +29,9 @@
         <activity android:name=".ScreenSettings"
             android:screenOrientation="portrait"
             android:label="Settings"/>
+        <activity android:name=".ScreenWelldone"
+            android:screenOrientation="portrait"
+            android:label="WellDone"/>        
         
         <!-- Face Screens -->
         <activity android:name=".ScreenFaceTraining"

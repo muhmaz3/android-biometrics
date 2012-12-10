@@ -17,14 +17,12 @@ public class ScreenWelcome extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.screen_welcome_new); 
 		ImageView img_Setting, img_Train, img_Recognize;
+		
 		img_Setting = (ImageView)findViewById(R.id.btn_main_setting);
 		img_Setting.setOnClickListener(OnClickHandler);
 		
 		img_Recognize = (ImageView)findViewById(R.id.btn_main_Recognize);
 		img_Recognize.setOnClickListener(OnClickHandler);
-//		Timer timer = new Timer();
-//		imgView.setOnClickListener(OnClickHandler);
-//		timer.schedule(task, DEFAULT_SPLASH_TIME);
 
 		img_Train =(ImageView) findViewById(R.id.btn_main_train);
 		img_Train.setOnClickListener(OnClickHandler);
@@ -35,7 +33,7 @@ public class ScreenWelcome extends Activity {
 			img_Recognize.setVisibility(View.VISIBLE);
 		}else{
 			img_Train.setVisibility(View.VISIBLE);
-			img_Recognize.setVisibility(View.GONE);
+//			img_Recognize.setVisibility(View.GONE);
 		}
 	}
 
@@ -45,7 +43,7 @@ public class ScreenWelcome extends Activity {
 			int recogMode = AppUtil.getRecognitionMode(getApplicationContext());
 			switch (v.getId()) {
 			case R.id.btn_main_train:
-				intent = new Intent(ScreenWelcome.this, ScreenFaceTraining.class);
+				intent = new Intent(ScreenWelcome.this, ScreenVoiceTraining.class);
 				break;
 			case R.id.btn_main_Recognize:
 				switch (recogMode) {

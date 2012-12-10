@@ -8,7 +8,9 @@ import android.biometrics.util.AppConst;
 import android.biometrics.util.AppUtil;
 import android.biometrics.voice.VoiceRecognizer;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -19,7 +21,6 @@ public class ScreenVoiceRecognizing extends Activity {
 	
 	private ArrayList<PointList> trainingSet;
 	private String voicePath;
-	public static int threshold;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +60,7 @@ public class ScreenVoiceRecognizing extends Activity {
 		public void onClick(View v) {
 			switch (v.getId()) {
 			case R.id.btnRecord:
-				if (trainingSet == null || trainingSet.size() == 0) {
+				if (!AppUtil.isVoiceTrained(ScreenVoiceRecognizing.this)) {
 					Toast.makeText(ScreenVoiceRecognizing.this, 
 							getString(R.string.not_train_yet), 
 							Toast.LENGTH_LONG).show();
@@ -138,6 +139,7 @@ public class ScreenVoiceRecognizing extends Activity {
 			if(!result){
 				Toast.makeText(ScreenVoiceRecognizing.this, R.string.txt_load_voice_train_fail, Toast.LENGTH_SHORT).show();
 			}
+			Log.i("size", "threshold " + AppUtil.getPreference(ScreenVoiceRecognizing.this, AppConst.VOICE_THRESHOLD));
 		}
 	}*/
 
