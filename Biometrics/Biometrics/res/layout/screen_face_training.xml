@@ -68,7 +68,7 @@
                 android:padding="2dp"
                 android:text="Train"
                 android:drawableRight="@drawable/ic_settings" />
-
+<!-- 
             <ImageView
                 android:id="@+id/btnSettings"
                 android:layout_width="0dp"
@@ -86,7 +86,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/bg_action_icon"
                 android:src="@drawable/ic_mode_recognizing"
-                android:visibility="gone" />
+                android:visibility="gone" /> -->
         </LinearLayout>
     </LinearLayout>
 

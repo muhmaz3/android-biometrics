@@ -9,6 +9,7 @@ import android.biometrics.face.FaceRecognizer;
 import android.biometrics.util.AppConst;
 import android.biometrics.util.AppUtil;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;

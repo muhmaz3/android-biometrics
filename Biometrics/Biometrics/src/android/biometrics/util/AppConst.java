@@ -35,8 +35,10 @@ public class AppConst {
 	public static final int RECOGNITION_MODE_VOICE_FIRST = 3;
 	public static final int RECOGNITION_MODE_BOTH = 4;
 	
-	public static final int DEFAULT_VOICE_THRESHOLD = 600;
+	public static final float DEFAULT_VOICE_THRESHOLD = 600.0f;
 	public static final float DEFAULT_FACE_THRESHOLD = 0.7f;
+	public static final String VOICE_THRESHOLD = "Voice_threshold";
+	public static final float VOICE_INCREASE_THRESHOLD_VALUE = 50.0f;
 	public static final int DEFAULT_MIN_VOICE_RECORD = 7; //7 seconds
 	
 	public static final String CONFIDENT_FACE_CALCULATED = "Face Confident calculated";

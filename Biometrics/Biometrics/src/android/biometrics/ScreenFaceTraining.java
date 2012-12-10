@@ -66,10 +66,10 @@ public class ScreenFaceTraining extends Activity {
 		bt = (Button) findViewById(R.id.btnSave);
 		bt.setOnClickListener(OnClickButtonHandler);
 		
-		bt = (Button) findViewById(R.id.btnSettings);
-		bt.setOnClickListener(OnClickButtonHandler);
-		bt = (Button) findViewById(R.id.btnModeRecognizing);
-		bt.setOnClickListener(OnClickButtonHandler);
+//		bt = (Button) findViewById(R.id.btnSettings);
+//		bt.setOnClickListener(OnClickButtonHandler);
+//		bt = (Button) findViewById(R.id.btnModeRecognizing);
+//		bt.setOnClickListener(OnClickButtonHandler);
 		
 		mGallery = (Gallery) findViewById(R.id.gallery);
 		mGallery.setOnItemClickListener(new OnItemClickListener() {

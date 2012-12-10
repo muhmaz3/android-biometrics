@@ -108,4 +108,14 @@ public class AudioFeatureExtraction
     return avgDistance/arrayFeatureExtractorTrainSet.size();
    
   }
+  public double distance(ArrayList<PointList> arrayPointList, PointList pl){
+	  float valueReturn = 0;
+	  for(int i = 0; i < arrayPointList.size(); i++)
+	    {  	 
+	         double distance2DB = audioThreadDistance(pl, arrayPointList.get(i));
+	         Log.i("size", "Different distance " + distance2DB);
+	         valueReturn += distance2DB;
+	    }
+	  return valueReturn/arrayPointList.size();
+  }
 }
